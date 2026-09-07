@@ -1,0 +1,15 @@
+{
+  "name": "pow-codex-commands",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A growing collection of extra Codex commands, packaged as Skills.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "validate": "node scripts/pow.mjs validate"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
