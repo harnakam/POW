@@ -52,6 +52,8 @@ POW installs commands into `${CODEX_HOME:-~/.codex}/skills` and records SHA-256 
 | [`fuck-off`](commands/fuck-off/SKILL.md) | Turn rejected behavior into a concrete repository rule. |
 | [`js-do-it`](commands/js-do-it/SKILL.md) | Execute authorized or isolated security work without redundant hesitation. |
 | [`multi-codex`](commands/multi-codex/SKILL.md) | Fork independent work into context-preserving Codex Main tasks. |
+| [`pow-code-design`](commands/pow-code-design/SKILL.md) | Design readable code and focused extension boundaries from concrete change requirements. |
+| [`pow-first-loop`](commands/pow-first-loop/SKILL.md) | Define an ideal outcome, consult a history-free AI, and build a real executable loop toward completion. |
 | [`soso`](commands/soso/SKILL.md) | Preserve an approved working pattern as a repository rule. |
 
 ## Add a command manually
