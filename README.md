@@ -61,7 +61,16 @@ POW installs commands into `${CODEX_HOME:-~/.codex}/skills` and records SHA-256 
 
 Use `$optimize-latency` when investigating slow Codex work. The [Japanese optimization procedure](commands/optimize-latency/references/workflow.md) covers reuse, command scheduling, selective sub-agents, measurement boundaries, and safe caching. The [2026-10-19 measured examples](commands/optimize-latency/references/measurements-2026-10-19.md) separate a comparable workflow experiment from unrelated task timings and document what remains unknown.
 
-This command adds instructions and reference Markdown only. It does not install the experimental `cxd` dispatcher, an API proxy, a compressor, or a background service. Simple tasks do not require a new harness or a team of agents.
+The command also bundles [cxd for Windows and Linux](commands/optimize-latency/references/cxd.md): a Python-standard-library command DAG runner, cached read-only worker, and an ownership-preserving installer. POW copies these resources with the Skill but does not automatically install a PATH command or start a worker. No API proxy or compressor is added. Simple tasks do not require a new harness or a team of agents.
+
+To try the included example without installing cxd (use `python3` on Linux):
+
+```sh
+python -B commands/optimize-latency/scripts/cxd/dispatch.py --workspace examples/cxd check
+python -B commands/optimize-latency/scripts/cxd/dispatch.py --workspace examples/cxd stop
+```
+
+The [cxd guide](commands/optimize-latency/references/cxd.md) covers explicit installation, short presets, resident sessions, result logs, and filesystem limitations. Python 3.10+ is required only for cxd; the POW installer remains Node-only.
 
 ## Add a command manually
 
