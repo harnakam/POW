@@ -52,9 +52,16 @@ POW installs commands into `${CODEX_HOME:-~/.codex}/skills` and records SHA-256 
 | [`fuck-off`](commands/fuck-off/SKILL.md) | Turn rejected behavior into a concrete repository rule. |
 | [`js-do-it`](commands/js-do-it/SKILL.md) | Execute authorized or isolated security work without redundant hesitation. |
 | [`multi-codex`](commands/multi-codex/SKILL.md) | Fork independent work into context-preserving Codex Main tasks. |
+| [`optimize-latency`](commands/optimize-latency/SKILL.md) | Diagnose slow tasks and reduce repeated code generation, model round trips, and orchestration costs using measured evidence. |
 | [`pow-code-design`](commands/pow-code-design/SKILL.md) | Design readable code and focused extension boundaries from concrete change requirements. |
 | [`pow-first-loop`](commands/pow-first-loop/SKILL.md) | Define an ideal outcome, consult a history-free AI, and build a real executable loop toward completion. |
 | [`soso`](commands/soso/SKILL.md) | Preserve an approved working pattern as a repository rule. |
+
+## Latency optimization
+
+Use `$optimize-latency` when investigating slow Codex work. The [Japanese optimization procedure](commands/optimize-latency/references/workflow.md) covers reuse, command scheduling, selective sub-agents, measurement boundaries, and safe caching. The [2026-10-19 measured examples](commands/optimize-latency/references/measurements-2026-10-19.md) separate a comparable workflow experiment from unrelated task timings and document what remains unknown.
+
+This command adds instructions and reference Markdown only. It does not install the experimental `cxd` dispatcher, an API proxy, a compressor, or a background service. Simple tasks do not require a new harness or a team of agents.
 
 ## Add a command manually
 
