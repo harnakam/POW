@@ -21,6 +21,7 @@ Reduce the measured cost of a task while preserving its requested behavior, veri
 - Read [the optimization procedure](references/workflow.md) for measurement boundaries, reuse, concurrency, and stopping conditions.
 - Read [the measured examples](references/measurements-2026-10-19.md) only when an evidence example or comparison is useful. Their values are historical observations, not performance promises.
 - Read [the bundled cxd guide](references/cxd.md) when a reusable dispatcher is needed. It includes a Python-standard-library Windows/Linux runtime and an explicit, ownership-preserving installer; do not install or start it merely because this skill was loaded.
+- Read [the RTK and Headroom guide](references/headroom.md) for context compression. Keep compression before model ingestion, preserve retrieval, and distinguish optional stdio MCP from automatic proxy routing.
 
 ## Constraints
 

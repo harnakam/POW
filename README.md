@@ -72,6 +72,8 @@ python -B commands/optimize-latency/scripts/cxd/dispatch.py --workspace examples
 
 The [cxd guide](commands/optimize-latency/references/cxd.md) covers explicit installation, short presets, resident sessions, result logs, and filesystem limitations. Python 3.10+ is required only for cxd; the POW installer remains Node-only.
 
+For context compression, see the [RTK and Headroom guide](commands/optimize-latency/references/headroom.md). It covers isolated Headroom 0.41.0 installation, Codex stdio MCP integration without provider changes, local compression and retrieval, offline settings, and measured limits. These optional third-party tools are not downloaded or enabled by POW automatically.
+
 ## Add a command manually
 
 Create `commands/<name>/SKILL.md` with lowercase kebab-case names and required `name` and `description` frontmatter. Then run:
