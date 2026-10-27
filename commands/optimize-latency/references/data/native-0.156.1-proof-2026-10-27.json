@@ -161,7 +161,29 @@
     "patch": "native/patches/codex-0.156.1-native-admission.patch",
     "sha256": "0c60356a01103f14f74328306b5f14c9560432720d8c46a2b25a408d6b9dbc0a",
     "reason": "Queued native admission now observes cancellation explicitly; running handler behavior unchanged",
-    "tests": "running nine native tests",
-    "binary_verified": false
+    "binary_verified": false,
+    "source_tests": {
+      "status": "passed",
+      "test_count": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "command": "cargo nextest run -p codex-core --lib -E test(native_scheduler) --no-fail-fast",
+      "reported_compile_duration": "7m47s",
+      "reported_test_duration": "0.218s",
+      "cases": [
+        "tools::native_scheduler::tests::queued_cancellation_returns_before_capacity_is_released_and_never_runs_handler",
+        "tools::native_scheduler::tests::aborting_active_execution_releases_capacity",
+        "tools::native_scheduler::tests::failed_execution_releases_capacity",
+        "tools::native_scheduler::tests::control_can_dispatch_and_wait_for_child_at_limit_one",
+        "tools::native_scheduler::tests::image_reads_queue_while_agent_coordination_remains_available",
+        "tools::native_scheduler::tests::configuration_is_optional_but_invalid_configuration_fails_closed",
+        "tools::native_scheduler::tests::guardian_review_has_bounded_capacity_independent_of_approval_parents",
+        "tools::native_scheduler::tests::cancelling_guardian_execution_releases_review_reserve",
+        "tools::native_scheduler::tests::concurrent_calls_queue_and_cancelled_waiter_does_not_leak"
+      ],
+      "scope": "Native source tests; 0.156 outer runtime already aborts cancelled dispatch; explicit queued cancellation is preventive hardening, not the newer finishes_on_cancellation integration regression"
+    },
+    "source_review": "passed; no additional actionable findings"
   }
 }

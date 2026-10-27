@@ -45,6 +45,8 @@ Pythonは独立3件＋依存2件の固定5ジョブ、正確な推定を与え�
 
 ## 検証と導入範囲
 
+POW移植後の検証は[検証記録](data/verification-2026-10-27.json)に保存した。Node37件、cxd44件（Windows2件skip、Linux1件skip）、native補助21件、区間計測10件を確認。後二者もWindows/Linuxで実行した。GitHub CIのNode20/22×Windows/Linux/macOS、Python3.10/3.12×Windows/Linuxが成功。最初のWindows Node CIはbundleの改行変換で失敗し、byte保持のGit属性を追加して再実行した。失敗を除外して成功扱いにはしない。
+
 元のPythonランナー20テスト、Nodeスケジューラー群20テストが成功した記録を確認。依存順、FIFO切り替え、上限、read/read並行とwrite排他、失敗とblocked、通知例外、協調キャンセル、複数タスク共有枠、proxy、await忘れ待機、session_id維持、固定bundleを対象にした。これは調査時点の検証記録で、POWへの移植後の検証結果とは分ける。
 
 実Tool接続はWindowsで確認した。Linuxの実Tool接続は未検証。Python側の一般OS条件とCIは[cxdガイド](cxd.md)を参照。proxyを通ったToolの自動捕捉は確認済みだが、稼働Desktop全体へのネイティブな強制適用は未確認。導入判定に必要な証拠は[調査手順](investigation.md#本体の自動適用を検証する)。モデル品質、認証、セキュリティ保護を下げる変更はこの実験に含めない。
