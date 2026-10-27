@@ -89,7 +89,7 @@ async function hashFile(filePath) {
   return createHash("sha256").update(content).digest("hex");
 }
 
-async function collectFileHashes(root, relative = "") {
+async function collectFileHashes(root, relative = "", excludePythonCache = false) {
   const current = path.join(root, relative);
   const entries = await readdir(current, { withFileTypes: true });
   const files = {};
@@ -99,8 +99,12 @@ async function collectFileHashes(root, relative = "") {
     if (entry.isSymbolicLink()) {
       throw new PowError(`Symbolic links are not allowed in commands: ${childRelative}`);
     }
+    if (excludePythonCache && (
+      (entry.isDirectory() && entry.name === "__pycache__") ||
+      (entry.isFile() && /\.py[co]$/i.test(entry.name))
+    )) continue;
     if (entry.isDirectory()) {
-      Object.assign(files, await collectFileHashes(root, childRelative));
+      Object.assign(files, await collectFileHashes(root, childRelative, excludePythonCache));
       continue;
     }
     if (!entry.isFile()) {
@@ -145,7 +149,7 @@ async function validateCommands(repoRoot) {
       throw error;
     }
     parseFrontmatter(skill, entry.name);
-    const files = await collectFileHashes(commandRoot);
+    const files = await collectFileHashes(commandRoot, "", true);
     commands.push({ name: entry.name, root: commandRoot, files });
   }
 

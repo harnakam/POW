@@ -1,5 +1,6 @@
 """ctx PRESET is asynchronous; ctx -wait PRESET runs synchronously."""
 import sys
+sys.dont_write_bytecode = True
 from dispatch import main as dispatch
 
 

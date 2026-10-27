@@ -34,3 +34,11 @@ RTKとHeadroomは別製品。[導入と回復手順](headroom.md)を参照。Hea
 ## 同梱しないもの
 
 個人の会話、状態DB、認証情報、絶対ユーザーパス、生trace、WindowsAppsから抽出したアプリJS、公式sourceの巨大checkout、カスタムexe、環境変更前のbackupは公開しない。公開対象は自作補助、公開ソースpatch、必要ライセンス、匿名化集計と再現手順。現場用の古い一回限りの計測器は重複して配布せず、区間計測の共通部分を上記`analyze_timeline.py`へ移した。
+
+## 本体ビルドに使った開発ツール
+
+Rust 1.95を追加し、`cargo +1.95.0`で明示利用した。既定のRust toolchainは変更していない。過去CLIの検証ではjust/cargo-nextestも調査用のローカル作業領域で使ったが、通常のSkill/cxd実行には不要。公開のnative再現手順はcargoの入口を示す。WindowsのMSVC linkerと版一致するvendor helper群はnativeビルド・実行に必要で、POWのPython/Nodeランナーの依存ではない。
+
+この端末の旧cxdは旧形式の所有receiptを持っていたため、同じ応答race修正を既存sourceへ移し、所有hash確認・backup・atomic更新で反映した。shimと既存Python指定を保持し、実際のindex/stopを確認した。個人パス入りの一回限りの旧installerは公開しない。別環境の導入には同梱の`install_cxd.py`を使い、未所有の旧shimを強制的に取り込まず、別prefixで検証する。
+
+Skillのsource配布では`__pycache__`、`.pyc`、`.pyo`を除外する。インストール先の所有照合は全ファイルを対象に保ち、管理外cacheも通常update/uninstallでは保護する。以前の所有記録に含まれた未変更cacheは通常更新で除去できる。

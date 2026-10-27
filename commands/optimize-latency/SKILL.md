@@ -19,6 +19,7 @@ Reduce the measured cost of a task while preserving its requested behavior, veri
 ## Routing
 
 - Read [the file and installation inventory](references/inventory.md) for required Python/Node entry points, Skills, external tools, and excluded private artifacts.
+- Read [the operating policy](references/operating-policy.md) for the global AGENTS.md blocks used in this investigation; installation does not silently edit global instructions.
 
 - Read [the optimization procedure](references/workflow.md) for measurement boundaries, reuse, concurrency, and stopping conditions.
 - Read [the measured examples](references/measurements-2026-10-19.md) only when an evidence example or comparison is useful. Their values are historical observations, not performance promises.

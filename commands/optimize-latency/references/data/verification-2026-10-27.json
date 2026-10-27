@@ -1,19 +1,28 @@
 {
   "date": "2026-10-27",
   "node": {
-    "tests": 37,
-    "failed": 0
+    "tests": 41,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": "Windows authorized workspace-temp execution; includes source-cache migration and source-symlink tests"
   },
   "python_cxd": {
     "windows": {
-      "run": 44,
+      "run": 47,
       "skipped": 2,
-      "failed": 0
+      "failed": 0,
+      "evidence": "GitHub CI Python3.10/3.12; local Windows platform11 cases also passed"
     },
     "linux_wsl_native_filesystem": {
       "run": 44,
       "skipped": 1,
       "failed": 0
+    },
+    "linux_ci": {
+      "run": 47,
+      "skipped": 4,
+      "failed": 0,
+      "evidence": "GitHub CI Python3.10/3.12"
     }
   },
   "python_native_helpers": {
@@ -34,25 +43,38 @@
   },
   "repository_skill_validation": 13,
   "github_ci": {
-    "commit": "ca733da1321a3d556a24879f61763338a8110492",
-    "url": "https://github.com/harnakam/POW/actions/runs/40493815121",
+    "commit": "17ae2de26a00135d671450605ba69a25bcb09c83",
+    "url": "https://github.com/harnakam/POW/actions/runs/40498020468",
     "conclusion": "success",
     "matrix": "Node20/22 on Windows/Linux/macOS; Python3.10/3.12 on Windows/Linux"
   },
   "resolved_findings": [
     "Native queued admission cancellation covered by regression tests; running handler cleanup preserved",
     "cxd bridge uses workdir field instead of PowerShell-specific workspace quoting",
-    "Git attributes preserve published patch, fixture and generated bundle bytes across Windows/Linux checkout"
+    "Git attributes preserve published patch, fixture and generated bundle bytes across Windows/Linux checkout",
+    "Windows resident response sharing race: bounded read/unlink retries within the existing request deadline; no command resubmission, permanent failure preserved",
+    "Skill installer excludes generated Python caches only from source assets; installed-file ownership checks remain complete and pre-filter symlink rejection remains intact"
   ],
   "deployment": {
     "new_skill": "optimize-latency",
     "user_environment_override_applied": false,
     "running_desktop_verified": false,
-    "release_binary_verified": false
+    "release_binary_verified": false,
+    "skill_python_cache_resources": 0,
+    "legacy_cxd_runtime_updated": true,
+    "global_operating_policy_blocks_verified": 3
   },
   "limitations": [
     "Counts describe the listed suites, not the entire upstream Codex test suite",
     "Historical dev E2E proofs do not verify the corrected release binary",
-    "No native whole-turn or universal speedup is claimed"
-  ]
+    "No native whole-turn or universal speedup is claimed",
+    "The process that held the transient Windows file handle was not identified from CI logs"
+  ],
+  "normal_workspace_verification": {
+    "runs": 1,
+    "tests": 4,
+    "parallel_checks": 3,
+    "elapsed_s": 0.735,
+    "scope": "subprocess project checks; excludes model and Tool transport; no speed comparison"
+  }
 }

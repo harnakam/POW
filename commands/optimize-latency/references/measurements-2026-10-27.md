@@ -45,7 +45,7 @@ Pythonは独立3件＋依存2件の固定5ジョブ、正確な推定を与え�
 
 ## 検証と導入範囲
 
-POW移植後の検証は[検証記録](data/verification-2026-10-27.json)に保存した。Node37件、cxd44件（Windows2件skip、Linux1件skip）、native補助26件、区間計測10件を確認。後二者もWindows/Linuxで実行した。GitHub CIのNode20/22×Windows/Linux/macOS、Python3.10/3.12×Windows/Linuxが成功。最初のWindows Node CIはbundleの改行変換で失敗し、byte保持のGit属性を追加して再実行した。失敗を除外して成功扱いにはしない。
+POW移植後の検証は[検証記録](data/verification-2026-10-27.json)に保存した。初期Node37件、初期cxd44件（Windows2件skip、Linux1件skip）、native補助26件、区間計測10件を確認。後二者もWindows/Linuxで実行した。GitHub CIのNode20/22×Windows/Linux/macOS、Python3.10/3.12×Windows/Linuxが成功。最初のWindows Node CIはbundleの改行変換で失敗し、byte保持のGit属性を追加して再実行した。失敗を除外して成功扱いにはしない。
 
 元のPythonランナー20テスト、Nodeスケジューラー群20テストが成功した記録を確認。依存順、FIFO切り替え、上限、read/read並行とwrite排他、失敗とblocked、通知例外、協調キャンセル、複数タスク共有枠、proxy、await忘れ待機、session_id維持、固定bundleを対象にした。これは調査時点の検証記録で、POWへの移植後の検証結果とは分ける。
 
@@ -58,3 +58,7 @@ proxyとは別に、Desktop対応版0.164.0-alpha.11.1のnative dispatch admissi
 対応版は初期8 native testsが成功した後、レビューで待機中キャンセルの問題を発見し修正した。実Dynamic Toolの待機キャンセル回帰を含む修正後9 native testsが成功（実行0.40秒、再コンパイル4分07秒）。初期exeのE2Eを修正後binaryの証明に転用しない。過去のCLI0.156.1では別途8 native testsと直接Tool/Code Modeのsandbox検証が成功しているが、別版への転用はしない。稼働Desktopはまだ切り替えていない。実行器の速度比較ではなく、呼び出し経路と通常の権限境界の接続確認である。[nativeガイド](../native/README.md)に制約と再現・接続・復元手順を記録した。
 
 上記Desktop対応exeはdev opt0のE2E用ビルド。元のvendor releaseより遅くなる恐れがあるため、常用切り替えしない。正式なrelease buildはキャンセル修正後の9テスト成功を受け、修正済みsourceで開始した。完了・実行はまだ検証されていない。dev E2E成功はrelease buildの成功・稼働・速度を証明しない。
+
+Windows応答ファイルの共有競合を追加CIで確認し、要求期限内のread/unlinkだけを再試行する修正を追加した。実共有ハンドル・stop時の回復・期限上限の3回帰を加えた最終cxdは47件（Windows2件skip、Linux4件skip）。修正後の全CIが成功した。ハンドル保持プロセスの正体は未特定で、恒久拒否を成功扱いにする変更はない。
+
+Skill配布sourceのPython cache混入も修正した。source除外・旧所有cache移行・未所有cache保護・source symlink拒否を加えたNode最終検証は41件すべて成功（Windowsの承認された通常実行、一時領域はworkspace内）。インストール先の所有検査は除外しない。

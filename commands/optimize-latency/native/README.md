@@ -201,3 +201,5 @@ Cargoは作業ディレクトリから`.cargo/config.toml`を探索する。親w
 対象タグのCargo.lockにはworkspace packageの版が0.0.0のものが残り、Cargoが166項目を0.164.0-alpha.11.1へ正規化した。削除・追加行の対応を確認し、外部依存の変更はなかった。これはnative schedulerの差分とは別の生成差分として記録する。
 
 サンドボックス内でvendored protocがWindows DLL再配置エラー623を返した試行は、同じ実行ファイルの`--version`を承認された通常実行で比較し、そちらは`libprotoc 31.1`で成功した。source、認証、sandbox設定の恒久的な変更で回避せず、ビルド処理を適切な権限経路で実行する。失敗時間も調査費用であり、schedulerの処理時間やモデル推論時間へ分類しない。
+
+正式releaseビルド中の一回の資源観測では、端末RAM31.22GiBに対し空き0.71GiB、rustcのworking set18.97GiB・private memory25.66GiBだった。累積CPU時間は5225秒（複数coreの合計であり壁時計ではない）。メモリー余裕が少ない状態を確認したが、単一snapshotから遅延の何%がpagingだったかは求めない。他の重いbuildを追加せず、ユーザーのアプリ・WSL・保護設定を停止/変更して数値を改善する操作は行わなかった。
