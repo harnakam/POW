@@ -11,7 +11,7 @@ sys.dont_write_bytecode = True
 from resident import inside
 from resident_rpc import directories, request, serve, state_info
 
-BUILTINS = {'init', 'aliases', 'serve', 'start', 'status', 'stop', 'index', 'symbols', 'tree'}
+BUILTINS = {'init', 'aliases', 'serve', 'start', 'status', 'stop', 'index', 'symbols', 'tree', 'plan', 'wait', 'result'}
 
 
 def configuration(root):
@@ -34,8 +34,7 @@ def configuration(root):
     return config
 
 
-def run_preset(root, name, output=None, concurrency=3, emit_events=False, extra_jobs=()):
-    from command_actors import run_manifest_sync, validate_manifest
+def prepare_preset(root, name, extra_jobs=()):
     root = Path(root).resolve()
     config = configuration(root)
     preset = config.get('presets', {}).get(name)
@@ -54,6 +53,12 @@ def run_preset(root, name, output=None, concurrency=3, emit_events=False, extra_
         if not isinstance(cwd, str) or not cwd:
             raise ValueError('cwd must be a nonempty directory path')
         job['cwd'] = str(inside(root, cwd))
+    return manifest
+
+
+def run_prepared(root, manifest, output=None, concurrency=3, emit_events=False):
+    from command_actors import run_manifest_sync, validate_manifest
+    root = Path(root).resolve()
     output = (root / '.cxd/runs' / uuid.uuid4().hex) if output is None else Path(output)
     output = inside(root, output)
     def read_operation(operation, parameters):
@@ -67,6 +72,10 @@ def run_preset(root, name, output=None, concurrency=3, emit_events=False, extra_
     return run_manifest_sync(manifest, output, concurrency, emit_events=emit_events, handlers=handlers)
 
 
+def run_preset(root, name, output=None, concurrency=3, emit_events=False, extra_jobs=()):
+    return run_prepared(root, prepare_preset(root, name, extra_jobs), output, concurrency, emit_events)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', nargs='?', default='aliases')
@@ -77,10 +86,13 @@ def main(argv=None):
     parser.add_argument('--events', action='store_true')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--idle-seconds', type=float, default=900)
+    parser.add_argument('--timeout', type=float, default=60)
+    parser.add_argument('--compact', action='store_true')
+    parser.add_argument('--attached', action='store_true')
     args = parser.parse_args(argv)
     root = args.workspace.resolve()
-    if args.argument is not None and args.command != 'symbols':
-        parser.error('only symbols accepts a positional argument')
+    if args.argument is not None and args.command not in {'symbols', 'plan', 'start', 'wait', 'result'}:
+        parser.error('this command does not accept a positional argument')
     if not math.isfinite(args.idle_seconds) or args.idle_seconds <= 0:
         parser.error('--idle-seconds must be positive and finite')
     try:
@@ -90,12 +102,34 @@ def main(argv=None):
             result = {'configured': str(root)}
         elif args.command == 'aliases':
             config = configuration(root)
-            result = {'commands': ['init', 'index', 'symbols QUERY', 'tree', 'serve', 'start', 'status', 'stop'],
+            result = {'commands': ['init', 'index', 'symbols QUERY', 'tree', 'serve', 'start PRESET', 'plan PRESET', 'wait ID', 'result ID', 'status', 'stop'],
                       'presets': sorted(config.get('presets', {}))}
         elif args.command == 'serve':
             configuration(root)
             serve(root, idle_seconds=args.idle_seconds)
             return 0
+        elif args.command == 'plan':
+            from command_actors import scheduling_plan
+            result = scheduling_plan(prepare_preset(root, args.argument), args.concurrency, root,
+                                     dict.fromkeys(('syntax', 'timing', 'index', 'symbols', 'tree')))
+        elif args.command == 'start' and args.argument:
+            from async_jobs import start
+            result = start(root, args.argument, args.concurrency, attached=args.attached)
+            if args.compact:
+                result.pop('summary', None)
+            print(json.dumps(result, ensure_ascii=False))
+            return 1 if result['status'] in {'failed', 'interrupted'} else 0
+        elif args.command in {'wait', 'result'}:
+            from async_jobs import result as read_result, wait
+            result = (wait(root, args.argument, args.timeout) if args.command == 'wait'
+                      else read_result(root, args.argument))
+            if args.compact and 'summary' in result:
+                summary = result.pop('summary')
+                result.update(elapsed_s=summary['elapsed_s'], jobs={name: {
+                    'status': job['status'], 'returncode': job['returncode']}
+                    for name, job in summary['jobs'].items()})
+            print(json.dumps(result, ensure_ascii=False))
+            return 124 if result.get('wait_timed_out') else (1 if result['status'] in {'failed', 'interrupted'} else 0)
         elif args.command in {'start', 'status', 'stop'}:
             result = request(root, 'status' if args.command == 'start' else args.command,
                              start=args.command == 'start')

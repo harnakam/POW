@@ -1,0 +1,56 @@
+[
+  {
+    "id": "janken",
+    "directory": "janken",
+    "expected_tests": 8,
+    "reads": [
+      "project:janken"
+    ],
+    "writes": [
+      "temporary-tests:janken"
+    ],
+    "estimated_s": 8,
+    "arguments": {
+      "cmd": "python -B -m unittest -v test_janken",
+      "login": false,
+      "yield_time_ms": 10000,
+      "max_output_tokens": 3000
+    }
+  },
+  {
+    "id": "maze",
+    "directory": "maze",
+    "expected_tests": 7,
+    "reads": [
+      "project:maze"
+    ],
+    "writes": [
+      "temporary-tests:maze"
+    ],
+    "estimated_s": 7,
+    "arguments": {
+      "cmd": "python -B -m unittest -v test_maze",
+      "login": false,
+      "yield_time_ms": 10000,
+      "max_output_tokens": 3000
+    }
+  },
+  {
+    "id": "tiny-todo",
+    "directory": "tiny-todo",
+    "expected_tests": 4,
+    "reads": [
+      "project:tiny-todo"
+    ],
+    "writes": [
+      "temporary-tests:tiny-todo"
+    ],
+    "estimated_s": 4,
+    "arguments": {
+      "cmd": "python -B -m unittest -v test_todo",
+      "login": false,
+      "yield_time_ms": 10000,
+      "max_output_tokens": 3000
+    }
+  }
+]

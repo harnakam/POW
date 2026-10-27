@@ -1,0 +1,700 @@
+diff --git a/codex-rs/core/src/tools/code_mode/execute_handler.rs b/codex-rs/core/src/tools/code_mode/execute_handler.rs
+index e451981..cce5b0e 100644
+--- a/codex-rs/core/src/tools/code_mode/execute_handler.rs
++++ b/codex-rs/core/src/tools/code_mode/execute_handler.rs
+@@ -239,6 +239,10 @@ impl CodeModeExecuteHandler {
+ }
+ 
+ impl CoreToolRuntime for CodeModeExecuteHandler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Custom { .. })
+     }
+diff --git a/codex-rs/core/src/tools/code_mode/wait_handler.rs b/codex-rs/core/src/tools/code_mode/wait_handler.rs
+index 5b4bf37..474dd60 100644
+--- a/codex-rs/core/src/tools/code_mode/wait_handler.rs
++++ b/codex-rs/core/src/tools/code_mode/wait_handler.rs
+@@ -200,6 +200,10 @@ impl CodeModeWaitHandler {
+ }
+ 
+ impl CoreToolRuntime for CodeModeWaitHandler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn pre_tool_use_payload(&self, _invocation: &ToolInvocation) -> Option<PreToolUsePayload> {
+         // Code-mode `wait` is runtime control for an existing code cell, not a
+         // standalone user action. Tool calls made from code mode still flow
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs b/codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs
+index fe67246..fa3f02b 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs
+@@ -133,6 +133,10 @@ async fn handle_close_agent(
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs b/codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs
+index 2b517f3..8a8930a 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs
+@@ -156,6 +156,10 @@ async fn handle_resume_agent(
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents/send_input.rs b/codex-rs/core/src/tools/handlers/multi_agents/send_input.rs
+index 1548d01..4f315cb 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents/send_input.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents/send_input.rs
+@@ -135,6 +135,10 @@ impl Handler {
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs b/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs
+index b8cded3..6744513 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs
+@@ -215,6 +215,10 @@ async fn handle_spawn_agent(
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents/wait.rs b/codex-rs/core/src/tools/handlers/multi_agents/wait.rs
+index 9f6f970..3a914cb 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents/wait.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents/wait.rs
+@@ -268,6 +268,10 @@ fn wait_receiver_agents(
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents_v2/followup_task.rs b/codex-rs/core/src/tools/handlers/multi_agents_v2/followup_task.rs
+index fa12970..cfd1b3c 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents_v2/followup_task.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents_v2/followup_task.rs
+@@ -51,6 +51,10 @@ impl Handler {
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs b/codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs
+index a9d6204..2ff4335 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs
+@@ -69,6 +69,10 @@ async fn handle_interrupt_agent(
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents_v2/list_agents.rs b/codex-rs/core/src/tools/handlers/multi_agents_v2/list_agents.rs
+index 1335152..4a25c21 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents_v2/list_agents.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents_v2/list_agents.rs
+@@ -68,6 +68,10 @@ impl Handler {
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents_v2/send_message.rs b/codex-rs/core/src/tools/handlers/multi_agents_v2/send_message.rs
+index 7713f01..d5f59c0 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents_v2/send_message.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents_v2/send_message.rs
+@@ -51,6 +51,10 @@ impl Handler {
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs b/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs
+index 3de9822..d1c509e 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs
+@@ -262,6 +262,10 @@ async fn handle_spawn_agent(
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs b/codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs
+index d2f92fe..76f7f51 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs
+@@ -118,6 +118,10 @@ impl Handler {
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+diff --git a/codex-rs/core/src/tools/handlers/request_user_input.rs b/codex-rs/core/src/tools/handlers/request_user_input.rs
+index b6f4356..54349c2 100644
+--- a/codex-rs/core/src/tools/handlers/request_user_input.rs
++++ b/codex-rs/core/src/tools/handlers/request_user_input.rs
+@@ -165,6 +165,10 @@ impl RequestUserInputHandler {
+ }
+ 
+ impl CoreToolRuntime for RequestUserInputHandler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn is_builtin_control_tool(&self) -> bool {
+         true
+     }
+diff --git a/codex-rs/core/src/tools/handlers/request_user_input_async.rs b/codex-rs/core/src/tools/handlers/request_user_input_async.rs
+index 2c4c706..fcdc2fb 100644
+--- a/codex-rs/core/src/tools/handlers/request_user_input_async.rs
++++ b/codex-rs/core/src/tools/handlers/request_user_input_async.rs
+@@ -138,6 +138,10 @@ impl ToolExecutor<ToolInvocation> for RequestUserInputAsyncHandler {
+ }
+ 
+ impl CoreToolRuntime for RequestUserInputAsyncHandler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn is_builtin_control_tool(&self) -> bool {
+         true
+     }
+diff --git a/codex-rs/core/src/tools/handlers/send_message_to_user_async.rs b/codex-rs/core/src/tools/handlers/send_message_to_user_async.rs
+index 4d39002..f7dc90f 100644
+--- a/codex-rs/core/src/tools/handlers/send_message_to_user_async.rs
++++ b/codex-rs/core/src/tools/handlers/send_message_to_user_async.rs
+@@ -103,6 +103,10 @@ impl ToolExecutor<ToolInvocation> for SendMessageToUserAsyncHandler {
+ }
+ 
+ impl CoreToolRuntime for SendMessageToUserAsyncHandler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn is_builtin_control_tool(&self) -> bool {
+         true
+     }
+diff --git a/codex-rs/core/src/tools/handlers/sleep.rs b/codex-rs/core/src/tools/handlers/sleep.rs
+index 45db1a3..5fa225a 100644
+--- a/codex-rs/core/src/tools/handlers/sleep.rs
++++ b/codex-rs/core/src/tools/handlers/sleep.rs
+@@ -161,6 +161,10 @@ impl ToolExecutor<ToolInvocation> for SleepHandler {
+ }
+ 
+ impl CoreToolRuntime for SleepHandler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++
+     fn is_builtin_control_tool(&self) -> bool {
+         true
+     }
+diff --git a/codex-rs/core/src/tools/handlers/wait_for_environment.rs b/codex-rs/core/src/tools/handlers/wait_for_environment.rs
+index 95c423f..54502f1 100644
+--- a/codex-rs/core/src/tools/handlers/wait_for_environment.rs
++++ b/codex-rs/core/src/tools/handlers/wait_for_environment.rs
+@@ -170,7 +170,11 @@ impl ToolExecutor<ToolInvocation> for WaitForEnvironmentHandler {
+     }
+ }
+ 
+-impl CoreToolRuntime for WaitForEnvironmentHandler {}
++impl CoreToolRuntime for WaitForEnvironmentHandler {
++    fn scheduler_admission(&self) -> crate::tools::native_scheduler::Admission {
++        crate::tools::native_scheduler::Admission::Control
++    }
++}
+ 
+ // Keep failure output small while preserving a UTF-8 boundary.
+ fn environment_failure(environment_id: &str, error: &str) -> FunctionCallError {
+diff --git a/codex-rs/core/src/tools/mod.rs b/codex-rs/core/src/tools/mod.rs
+index 262efcc..5ac1141 100644
+--- a/codex-rs/core/src/tools/mod.rs
++++ b/codex-rs/core/src/tools/mod.rs
+@@ -10,6 +10,7 @@ pub(crate) mod hook_names;
+ pub(crate) mod hosted_spec;
+ pub(crate) mod lifecycle;
+ mod multi_agent_tool;
++mod native_scheduler;
+ pub(crate) mod network_approval;
+ pub(crate) mod orchestrator;
+ pub(crate) mod parallel;
+diff --git a/codex-rs/core/src/tools/multi_agent_tool.rs b/codex-rs/core/src/tools/multi_agent_tool.rs
+index 8ea4a69..a902417 100644
+--- a/codex-rs/core/src/tools/multi_agent_tool.rs
++++ b/codex-rs/core/src/tools/multi_agent_tool.rs
+@@ -124,6 +124,10 @@ impl ToolExecutor<ToolInvocation> for MultiAgentV2ToolOverrides {
+ }
+ 
+ impl CoreToolRuntime for MultiAgentV2ToolOverrides {
++    fn scheduler_admission(&self) -> super::native_scheduler::Admission {
++        self.handler.scheduler_admission()
++    }
++
+     fn wait_until_ready<'a>(&'a self, session: &'a Arc<Session>) -> Option<BoxFuture<'a, ()>> {
+         self.handler.wait_until_ready(session)
+     }
+diff --git a/codex-rs/core/src/tools/native_scheduler.rs b/codex-rs/core/src/tools/native_scheduler.rs
+new file mode 100644
+index 0000000..6d05f4b
+--- /dev/null
++++ b/codex-rs/core/src/tools/native_scheduler.rs
+@@ -0,0 +1,343 @@
++//! Process-wide, opt-in admission for native tool dispatch.
++//!
++//! Existing runtime permissions and parallel-safety gates remain authoritative.
++//! This gate bounds work already submitted; it never rewrites JavaScript awaits.
++
++use std::sync::OnceLock;
++use tokio::sync::Semaphore;
++use tokio::sync::SemaphorePermit;
++
++#[derive(Clone, Copy, Debug)]
++pub(crate) enum Admission {
++    Control,
++    Leaf,
++    Review,
++}
++
++struct Scheduler {
++    primary: Semaphore,
++    review: Semaphore,
++}
++
++impl Scheduler {
++    fn new(limit: usize) -> Self {
++        Self {
++            primary: Semaphore::new(limit),
++            review: Semaphore::new(1),
++        }
++    }
++}
++
++pub(super) fn for_session(
++    admission: Admission,
++    source: &codex_protocol::protocol::SessionSource,
++) -> Admission {
++    if matches!(admission, Admission::Leaf) && crate::guardian::is_basic_session_source(source) {
++        Admission::Review
++    } else {
++        admission
++    }
++}
++
++static GATE: OnceLock<Result<Option<Scheduler>, String>> = OnceLock::new();
++
++fn parse_limit(value: Option<&str>) -> Result<Option<usize>, String> {
++    match value {
++        None => Ok(None),
++        Some(value) => match value.parse::<usize>() {
++            Ok(limit @ 1..=1024) => Ok(Some(limit)),
++            _ => Err("CODEX_NATIVE_TOOL_CONCURRENCY must be an integer from 1 to 1024".to_string()),
++        },
++    }
++}
++
++pub(super) async fn acquire(
++    admission: Admission,
++) -> Result<Option<SemaphorePermit<'static>>, String> {
++    let gate = GATE.get_or_init(|| {
++        let value = match std::env::var("CODEX_NATIVE_TOOL_CONCURRENCY") {
++            Ok(value) => Some(value),
++            Err(std::env::VarError::NotPresent) => None,
++            Err(std::env::VarError::NotUnicode(_)) => {
++                return Err("CODEX_NATIVE_TOOL_CONCURRENCY must contain valid Unicode".to_string());
++            }
++        };
++        let limit = parse_limit(value.as_deref())?;
++        if let Some(limit) = limit {
++            tracing::info!(limit, review_limit = 1, "native tool scheduler enabled");
++        }
++        Ok(limit.map(Scheduler::new))
++    });
++    if matches!(admission, Admission::Control) {
++        return Ok(None);
++    }
++    let gate = gate.as_ref().map_err(Clone::clone)?;
++    Ok(acquire_from(gate.as_ref(), admission).await)
++}
++
++async fn acquire_from(
++    gate: Option<&Scheduler>,
++    admission: Admission,
++) -> Option<SemaphorePermit<'_>> {
++    if matches!(admission, Admission::Control) {
++        return None;
++    }
++    match gate {
++        Some(gate) => {
++            let permits = match admission {
++                Admission::Control => return None,
++                Admission::Leaf => &gate.primary,
++                Admission::Review => &gate.review,
++            };
++            Some(
++                permits
++                    .acquire()
++                    .await
++                    .expect("native scheduler gate never closes"),
++            )
++        }
++        None => None,
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::Admission;
++    use super::Scheduler;
++    use super::acquire_from;
++    use super::parse_limit;
++    use std::time::Duration;
++    use tokio::time::timeout;
++
++    #[test]
++    fn configuration_is_optional_but_invalid_configuration_fails_closed() {
++        assert_eq!(parse_limit(None), Ok(None));
++        assert_eq!(parse_limit(Some("4")), Ok(Some(4)));
++        assert_eq!(parse_limit(Some("1")), Ok(Some(1)));
++        assert_eq!(parse_limit(Some("1024")), Ok(Some(1024)));
++        for value in ["", "0", "1025", "four", "-1"] {
++            assert!(parse_limit(Some(value)).is_err(), "{value}");
++        }
++    }
++
++    #[tokio::test]
++    async fn control_can_dispatch_and_wait_for_child_at_limit_one() {
++        let gate = Scheduler::new(1);
++        let control = acquire_from(Some(&gate), Admission::Control).await;
++        let child = timeout(
++            Duration::from_secs(1),
++            acquire_from(Some(&gate), Admission::Leaf),
++        )
++        .await
++        .expect("control must not consume child capacity");
++        assert!(control.is_none());
++        assert_eq!(gate.primary.available_permits(), 0);
++        drop(child);
++        assert_eq!(gate.primary.available_permits(), 1);
++    }
++
++    #[tokio::test]
++    async fn concurrent_calls_queue_and_cancelled_waiter_does_not_leak() {
++        let gate = Scheduler::new(1);
++        let active = acquire_from(Some(&gate), Admission::Leaf).await;
++        assert!(
++            timeout(
++                Duration::from_millis(10),
++                acquire_from(Some(&gate), Admission::Leaf)
++            )
++            .await
++            .is_err()
++        );
++        drop(active);
++        let next = timeout(
++            Duration::from_secs(1),
++            acquire_from(Some(&gate), Admission::Leaf),
++        )
++        .await
++        .expect("released capacity must be reusable");
++        assert_eq!(gate.primary.available_permits(), 0);
++        drop(next);
++        assert_eq!(gate.primary.available_permits(), 1);
++    }
++
++    #[tokio::test]
++    async fn failed_execution_releases_capacity() {
++        let gate = Scheduler::new(1);
++        let result: Result<(), &str> = async {
++            let _permit = acquire_from(Some(&gate), Admission::Leaf).await;
++            Err("tool failure")
++        }
++        .await;
++        assert_eq!(result, Err("tool failure"));
++        assert_eq!(gate.primary.available_permits(), 1);
++        assert!(acquire_from(None, Admission::Leaf).await.is_none());
++    }
++
++    #[tokio::test]
++    async fn aborting_active_execution_releases_capacity() {
++        let gate = std::sync::Arc::new(Scheduler::new(1));
++        let worker_gate = std::sync::Arc::clone(&gate);
++        let (started_tx, started_rx) = tokio::sync::oneshot::channel();
++        let worker = tokio::spawn(async move {
++            let _permit = acquire_from(Some(&worker_gate), Admission::Leaf).await;
++            let _ = started_tx.send(());
++            std::future::pending::<()>().await;
++        });
++        started_rx.await.expect("worker must acquire capacity");
++        assert_eq!(gate.primary.available_permits(), 0);
++        worker.abort();
++        assert!(worker.await.expect_err("worker must abort").is_cancelled());
++        assert_eq!(gate.primary.available_permits(), 1);
++    }
++
++    #[tokio::test]
++    async fn image_reads_queue_while_agent_coordination_remains_available() {
++        use crate::tools::handlers::ViewImageHandler;
++        use crate::tools::handlers::multi_agents::WaitAgentHandler;
++        use crate::tools::multi_agent_tool::multi_agent_v2_handler;
++        use crate::tools::registry::CoreToolRuntime;
++
++        let gate = Scheduler::new(1);
++        let image_reader = ViewImageHandler::default();
++        // Analytics labels this a control tool; admission must still bound I/O.
++        assert!(image_reader.is_builtin_control_tool());
++        let active_read = acquire_from(Some(&gate), image_reader.scheduler_admission()).await;
++        assert!(
++            timeout(
++                Duration::from_millis(10),
++                acquire_from(Some(&gate), image_reader.scheduler_admission())
++            )
++            .await
++            .is_err()
++        );
++        let waiter = multi_agent_v2_handler(
++            WaitAgentHandler::default(),
++            Some("custom_collaboration"),
++            None,
++            None,
++        );
++        let coordination = timeout(
++            Duration::from_secs(1),
++            acquire_from(Some(&gate), waiter.scheduler_admission()),
++        )
++        .await
++        .expect("namespaced coordination must bypass exhausted leaf capacity");
++        assert!(coordination.is_none());
++        drop(active_read);
++        assert_eq!(gate.primary.available_permits(), 1);
++    }
++
++    #[tokio::test]
++    async fn guardian_review_has_bounded_capacity_independent_of_approval_parents() {
++        use super::for_session;
++        use codex_protocol::protocol::InternalSessionSource;
++        use codex_protocol::protocol::SessionSource;
++        use codex_protocol::protocol::SubAgentSource;
++
++        let gate = Scheduler::new(1);
++        let parent = acquire_from(Some(&gate), Admission::Leaf).await;
++        let guardian = SessionSource::Internal(InternalSessionSource::Guardian);
++        let review = timeout(
++            Duration::from_secs(1),
++            acquire_from(Some(&gate), for_session(Admission::Leaf, &guardian)),
++        )
++        .await
++        .expect("Guardian must progress while approval parents occupy primary capacity");
++        assert_eq!(gate.review.available_permits(), 0);
++        assert!(
++            timeout(
++                Duration::from_millis(10),
++                acquire_from(Some(&gate), for_session(Admission::Leaf, &guardian))
++            )
++            .await
++            .is_err()
++        );
++        for ordinary in [
++            SessionSource::SubAgent(SubAgentSource::Review),
++            SessionSource::SubAgent(SubAgentSource::Other("ordinary".to_string())),
++        ] {
++            assert!(
++                timeout(
++                    Duration::from_millis(10),
++                    acquire_from(Some(&gate), for_session(Admission::Leaf, &ordinary))
++                )
++                .await
++                .is_err()
++            );
++        }
++        drop(review);
++        assert_eq!(gate.review.available_permits(), 1);
++        let basic = SessionSource::SubAgent(SubAgentSource::Other(
++            crate::guardian::GUARDIAN_REVIEWER_NAME.to_string(),
++        ));
++        let another = timeout(
++            Duration::from_secs(1),
++            acquire_from(Some(&gate), for_session(Admission::Leaf, &basic)),
++        )
++        .await
++        .expect("canonical basic Guardian source must share the review reserve");
++        drop(another);
++        drop(parent);
++        assert_eq!(gate.primary.available_permits(), 1);
++        assert_eq!(gate.review.available_permits(), 1);
++    }
++
++    #[tokio::test]
++    async fn cancelling_guardian_execution_releases_review_reserve() {
++        let gate = std::sync::Arc::new(Scheduler::new(1));
++        let worker_gate = std::sync::Arc::clone(&gate);
++        let (started_tx, started_rx) = tokio::sync::oneshot::channel();
++        let worker = tokio::spawn(async move {
++            let _permit = acquire_from(Some(&worker_gate), Admission::Review).await;
++            let _ = started_tx.send(());
++            std::future::pending::<()>().await;
++        });
++        started_rx.await.expect("review must acquire reserve");
++        assert_eq!(gate.review.available_permits(), 0);
++        worker.abort();
++        assert!(worker.await.expect_err("review must abort").is_cancelled());
++        assert_eq!(gate.primary.available_permits(), 1);
++        assert_eq!(gate.review.available_permits(), 1);
++    }
++
++    #[tokio::test]
++    async fn queued_cancellation_returns_before_capacity_is_released_and_never_runs_handler() {
++        use codex_async_utils::CancelErr;
++        use codex_async_utils::OrCancelExt;
++        use std::sync::atomic::AtomicBool;
++        use std::sync::atomic::Ordering;
++        use tokio_util::sync::CancellationToken;
++
++        let gate = Scheduler::new(1);
++        let active = acquire_from(Some(&gate), Admission::Leaf).await;
++        let cancellation = CancellationToken::new();
++        let executed = AtomicBool::new(false);
++        let queued = async {
++            let _permit = acquire_from(Some(&gate), Admission::Leaf)
++                .or_cancel(&cancellation)
++                .await?;
++            executed.store(true, Ordering::SeqCst);
++            Ok::<(), CancelErr>(())
++        };
++        tokio::pin!(queued);
++        assert!(futures::poll!(&mut queued).is_pending());
++        cancellation.cancel();
++        assert_eq!(
++            timeout(Duration::from_secs(1), &mut queued)
++                .await
++                .expect("queued cancellation must not wait for active work"),
++            Err(CancelErr::Cancelled)
++        );
++        assert!(!executed.load(Ordering::SeqCst));
++        assert_eq!(gate.primary.available_permits(), 0);
++        drop(active);
++        let replacement = timeout(
++            Duration::from_secs(1),
++            acquire_from(Some(&gate), Admission::Leaf),
++        )
++        .await
++        .expect("cancelled waiter must not retain queue capacity");
++        drop(replacement);
++        assert_eq!(gate.primary.available_permits(), 1);
++    }
++}
+diff --git a/codex-rs/core/src/tools/registry.rs b/codex-rs/core/src/tools/registry.rs
+index 4d3c50c..af10c86 100644
+--- a/codex-rs/core/src/tools/registry.rs
++++ b/codex-rs/core/src/tools/registry.rs
+@@ -27,6 +27,7 @@ use crate::tools::router::tool_log_payload;
+ use crate::tools::tool_dispatch_trace::ToolDispatchTrace;
+ use crate::util::error_or_panic;
+ use codex_analytics::ControlToolCallStatus;
++use codex_async_utils::OrCancelExt;
+ use codex_extension_api::ToolCallOutcome;
+ use codex_extension_api::ToolPolicy;
+ use codex_history::CodexHarnessMetadata;
+@@ -54,6 +55,11 @@ pub use codex_tools::ToolExposure;
+ /// Implementers provide the shared `ToolExecutor` behavior plus optional
+ /// core-owned metadata for hooks, telemetry, tool search, and argument diffs.
+ pub(crate) trait CoreToolRuntime: ToolExecutor<ToolInvocation> {
++    /// Reentrant coordination must never occupy capacity needed by child tools.
++    fn scheduler_admission(&self) -> super::native_scheduler::Admission {
++        super::native_scheduler::Admission::Leaf
++    }
++
+     /// Whether this built-in control tool needs a structured tool-call event.
+     fn is_builtin_control_tool(&self) -> bool {
+         false
+@@ -793,7 +799,27 @@ async fn handle_any_tool(
+ ) -> Result<AnyToolResult, FunctionCallError> {
+     let call_id = invocation.call_id.clone();
+     let payload = invocation.payload.clone();
++    // Apply admission at the common boundary, including Code Mode callbacks.
++    // Control tools must remain able to wait for or dispatch their children.
++    let queued_at = std::time::Instant::now();
++    let admission = super::native_scheduler::for_session(
++        tool.scheduler_admission(),
++        &invocation.turn.session_source,
++    );
++    let scheduler_permit = super::native_scheduler::acquire(admission)
++        .or_cancel(&invocation.cancellation_token)
++        .await
++        .map_err(|_| {
++            FunctionCallError::RespondToModel(
++                "native tool scheduler admission cancelled".to_string(),
++            )
++        })?
++        .map_err(FunctionCallError::RespondToModel)?;
++    if scheduler_permit.is_some() {
++        tracing::debug!(tool = %invocation.tool_name, ?admission, wait_ms = queued_at.elapsed().as_millis(), "native tool scheduler admitted invocation");
++    }
+     let output = tool.handle(invocation.clone()).await?;
++    drop(scheduler_permit);
+     let post_tool_use_payload =
+         CoreToolRuntime::post_tool_use_payload(tool, &invocation, output.as_ref());
+     let result = AnyToolResult {

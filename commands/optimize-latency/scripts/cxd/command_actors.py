@@ -24,6 +24,8 @@ def validate_manifest(manifest, concurrency=4, base_dir=None, handlers=None):
         raise ValueError('concurrency must be a positive integer')
     if not isinstance(manifest, dict) or not isinstance(manifest.get('jobs'), list) or not manifest['jobs']:
         raise ValueError('manifest must contain a nonempty jobs list')
+    if manifest.get('scheduling', 'critical_path') not in {'fifo', 'critical_path'}:
+        raise ValueError('scheduling must be fifo or critical_path')
     base_dir = Path.cwd() if base_dir is None else Path(base_dir)
     jobs = {}
     handlers = handlers or {}
@@ -66,6 +68,18 @@ def validate_manifest(manifest, concurrency=4, base_dir=None, handlers=None):
             cwd = str(cwd)
         jobs[job_id] = {'id': job_id, 'cwd': cwd,
                         'depends_on': list(dependencies), 'timeout_s': float(timeout)}
+        estimate = raw.get('estimated_s', 1)
+        if (isinstance(estimate, bool) or not isinstance(estimate, (int, float))
+                or not math.isfinite(estimate) or estimate <= 0):
+            raise ValueError(f'{job_id}: estimated_s must be finite and positive')
+        jobs[job_id]['estimated_s'] = float(estimate)
+        for claim in ('reads', 'writes'):
+            values = raw.get(claim, [])
+            if (not isinstance(values, list) or any(not isinstance(value, str)
+                    or not value.strip() or '\0' in value for value in values)
+                    or len(set(values)) != len(values)):
+                raise ValueError(f'{job_id}: {claim} must contain unique nonempty resource keys')
+            jobs[job_id][claim] = list(values)
         if operation is not None:
             jobs[job_id].update(operation=operation, parameters=raw.get('parameters', {}))
         else:
@@ -88,7 +102,43 @@ def validate_manifest(manifest, concurrency=4, base_dir=None, handlers=None):
 
     for job_id in jobs:
         visit(job_id)
+    if not math.isfinite(sum(job['estimated_s'] for job in jobs.values())):
+        raise ValueError('total estimated duration must be finite')
     return jobs
+
+
+def critical_path_scores(jobs):
+    children = {name: [] for name in jobs}
+    for name, job in jobs.items():
+        for dependency in job['depends_on']:
+            children[dependency].append(name)
+    scores = {}
+    def score(name):
+        if name not in scores:
+            scores[name] = jobs[name]['estimated_s'] + max(
+                (score(child) for child in children[name]), default=0)
+        return scores[name]
+    for name in jobs:
+        score(name)
+    return scores
+
+
+def resources_conflict(first, second):
+    return bool(set(first['writes']) & (set(second['reads']) | set(second['writes']))
+                or set(second['writes']) & set(first['reads']))
+
+
+def scheduling_plan(manifest, concurrency=4, base_dir=None, handlers=None):
+    jobs = validate_manifest(manifest, concurrency, base_dir, handlers)
+    scores = critical_path_scores(jobs)
+    policy = manifest.get('scheduling', 'critical_path')
+    order = sorted(jobs, key=lambda name: -scores[name]) if policy == 'critical_path' else list(jobs)
+    return {'scheduling': policy, 'concurrency': concurrency,
+            'estimated_lower_bound_s': max(max(scores.values(), default=0),
+                sum(job['estimated_s'] for job in jobs.values()) / concurrency),
+            'priority_order': order, 'critical_path_scores': scores,
+            'resource_conflicts': [[a, b] for i, a in enumerate(jobs)
+                                   for b in list(jobs)[i + 1:] if resources_conflict(jobs[a], jobs[b])]}
 
 
 def _atomic_json(path, data):
@@ -145,6 +195,8 @@ def run_manifest_sync(manifest, output, concurrency=4, *, emit_events=True,
         manifest = json.loads(manifest_path.read_text(encoding='utf-8-sig'))
     handlers = handlers or {}
     jobs = validate_manifest(manifest, concurrency, base_dir, handlers)
+    policy = manifest.get('scheduling', 'critical_path')
+    scores = critical_path_scores(jobs)
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
@@ -227,7 +279,11 @@ def run_manifest_sync(manifest, output, concurrency=4, *, emit_events=True,
     pool = ThreadPoolExecutor(max_workers=concurrency, thread_name_prefix='command-actor')
     try:
         while pending or active:
-            for job_id, job in list(pending.items()):
+            candidates = list(pending)
+            if policy == 'critical_path':
+                candidates.sort(key=lambda name: -scores[name])
+            for job_id in candidates:
+                job = pending[job_id]
                 if not all(dependency in results for dependency in job['depends_on']):
                     continue
                 failed = [dependency for dependency in job['depends_on']
@@ -244,6 +300,9 @@ def run_manifest_sync(manifest, output, concurrency=4, *, emit_events=True,
                                       'stderr_path': str(stderr_path), 'blocked_by': failed}
                     emit('blocked', job_id, returncode=None)
                 else:
+                    if len(active) >= concurrency or any(
+                            resources_conflict(job, jobs[name]) for name in active):
+                        continue
                     future = pool.submit(execute, job)
                     active[job_id] = future
                     future.add_done_callback(lambda done, jid=job_id: messages.put(('finished', jid, done)))
@@ -273,7 +332,9 @@ def run_manifest_sync(manifest, output, concurrency=4, *, emit_events=True,
         'started_utc': started_utc, 'elapsed_s': time.monotonic() - started,
         'max_running_processes': max_running_processes,
         'process_interval_scope': 'parent-observed child handles after spawn returns until wait/cleanup returns',
-        'concurrency': concurrency, 'jobs': {job_id: results[job_id] for job_id in jobs}}
+        'concurrency': concurrency, 'scheduling': policy,
+        'critical_path_scores': scores,
+        'jobs': {job_id: results[job_id] for job_id in jobs}}
     _atomic_json(output / 'result.json', summary)
     return summary
 

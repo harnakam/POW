@@ -1,0 +1,3 @@
+# Preserve the exact bytes referenced by published SHA-256 evidence on all OSes.
+commands/optimize-latency/native/patches/*.patch -text
+examples/scheduler-tasks/**/*.py -text

@@ -99,3 +99,21 @@ AST・クラス・関数・importの索引は内容ハッシュで更新する�
 結果は `.cxd/runs/<ID>/result.json`、標準出力・標準エラーはジョブ別のログ。`--output` はワークスペース内の新規ディレクトリだけを使え、既存結果は上書きしない。elapsedはコマンドバッチの時間であり、モデルによる引数生成や最終回答を含むタスク時間ではない。イベントJSONは `--events` で取得できる。
 
 検証は `python -B -m unittest discover -s test -p "test_cxd_*.py" -v`。WindowsとLinuxの同じテストをCIで実行し、インストールからshim起動、常駐の再利用・停止、依存順、失敗・タイムアウト、索引・状態・所有境界を確認する。
+
+## 依存関係と非同期実行
+
+`plan PRESET` は依存関係、論理的な読み書き競合、推定クリティカルパスを確認する。`depends_on` は必須の完了条件、`reads` / `writes` は完全一致する論理キーであり、OSのファイルアクセスを自動解析しない。同じキーのread/readは重ね、writeとの競合は直列にする。`estimated_s` は正の有限値。実行可能なジョブを同時実行数まで開始し、完了イベントで次を開始する。
+
+```sh
+cxd --workspace examples/scheduler-tasks plan verify-all
+ctx -wait verify-all --workspace examples/scheduler-tasks
+ctx verify-all --workspace examples/scheduler-tasks
+ctx result RUN_ID --workspace examples/scheduler-tasks
+ctx wait RUN_ID --workspace examples/scheduler-tasks --timeout 90
+```
+
+`ctx PRESET` は `cxd start PRESET`、`ctx -wait PRESET` は通常の同期実行に対応する。startの終了コード0と `submitted` / `running` は受付成功であり、テスト成功ではない。完了はwait/resultのstatusと各ジョブのexit codeで確認する。非同期結果は `.cxd/async/<RUN_ID>/` に保存し、過去結果を使い回さない。waitはrunner終了まで待ち、resultは現在の状態を読む。
+
+Codexでは短命なshellの終了時に子プロセスが停止される環境がある。`--attached --compact` でexecセッションを維持し、同梱 `scripts/cxd/bridge.js` の `functions.exec` / `yield_control` / `notify` を使う。待機はruntime内に置き、モデルによる反復ポーリングを避ける。単にバックグラウンド起動するだけで実行継続を保証しない。
+
+新版インストーラーはcxdとctxの両shimを管理する。既知の旧版所有記録は更新できるが、記録のないctxなどは上書きしない。既存の独自cxdがある場合は `--bin-dir` と `--package-dir` を別ディレクトリに指定して試す。

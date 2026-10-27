@@ -61,6 +61,46 @@ class InstallTests(unittest.TestCase):
         self.run_install()
         self.run_install('status')
 
+    def legacy_installation(self):
+        self.run_install()
+        ctx = self.binary / ('ctx.cmd' if os.name == 'nt' else 'ctx')
+        for path in (ctx, self.package / 'async_jobs.py', self.package / 'ctx.py'):
+            path.unlink()
+        receipt = self.package / installer.RECEIPT
+        data = json.loads(receipt.read_text())
+        keep = {str(self.package / name) for name in installer.LEGACY_FILES} | {str(self.shim)}
+        data['files'] = {name: value for name, value in data['files'].items() if name in keep}
+        receipt.write_text(json.dumps(data))
+        return ctx
+
+    def test_legacy_upgrade_adds_owned_ctx_and_preserves_unknowns(self):
+        ctx = self.legacy_installation()
+        unknown = self.package / 'notes.txt'
+        unknown.write_text('keep')
+        self.run_install()
+        self.assertTrue(ctx.is_file())
+        self.assertTrue((self.package / 'async_jobs.py').is_file())
+        self.assertEqual(unknown.read_text(), 'keep')
+        self.run_install('status')
+        self.run_install('uninstall')
+        self.assertFalse(ctx.exists())
+        self.assertEqual(unknown.read_text(), 'keep')
+
+    def test_legacy_upgrade_refuses_unowned_ctx(self):
+        ctx = self.legacy_installation()
+        ctx.write_text('another application')
+        before = self.snapshot()
+        self.run_install(ok=False)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_new_unowned_ctx_is_preserved(self):
+        self.binary.mkdir()
+        ctx = self.binary / ('ctx.cmd' if os.name == 'nt' else 'ctx')
+        ctx.write_text('another application')
+        before = self.snapshot()
+        self.run_install(ok=False)
+        self.assertEqual(self.snapshot(), before)
+
     def test_refuses_unowned_shim_before_writes(self):
         self.binary.mkdir()
         self.shim.write_text('mine')

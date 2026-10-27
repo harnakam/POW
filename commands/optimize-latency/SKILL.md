@@ -18,10 +18,17 @@ Reduce the measured cost of a task while preserving its requested behavior, veri
 
 ## Routing
 
+- Read [the file and installation inventory](references/inventory.md) for required Python/Node entry points, Skills, external tools, and excluded private artifacts.
+
 - Read [the optimization procedure](references/workflow.md) for measurement boundaries, reuse, concurrency, and stopping conditions.
 - Read [the measured examples](references/measurements-2026-10-19.md) only when an evidence example or comparison is useful. Their values are historical observations, not performance promises.
 - Read [the bundled cxd guide](references/cxd.md) when a reusable dispatcher is needed. It includes a Python-standard-library Windows/Linux runtime and an explicit, ownership-preserving installer; do not install or start it merely because this skill was loaded.
+- Read [the scheduler guide](references/scheduler.md) for command DAGs, attached start/wait/result, shared Tool slots, resource leases, and proxy boundaries.
+- Read [the investigation method](references/investigation.md) for timeline attribution, concurrency settings, reproducible experiments, and the native integration boundary.
+- Read [the 2026-10-27 measurements](references/measurements-2026-10-27.md) for real Tool verification versus synthetic scheduling experiments.
 - Read [the RTK and Headroom guide](references/headroom.md) for context compression. Keep compression before model ingestion, preserve retrieval, and distinguish optional stdio MCP from automatic proxy routing.
+
+- Read [the native integration guide](native/README.md) when process-wide native Tool admission or a version-matched Desktop override is explicitly needed. Keep build, isolated verification, registry configuration, and live engine verification distinct.
 
 ## Constraints
 

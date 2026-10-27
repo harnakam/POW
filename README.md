@@ -74,6 +74,10 @@ The [cxd guide](commands/optimize-latency/references/cxd.md) covers explicit ins
 
 For context compression, see the [RTK and Headroom guide](commands/optimize-latency/references/headroom.md). It covers isolated Headroom 0.41.0 installation, Codex stdio MCP integration without provider changes, local compression and retrieval, offline settings, and measured limits. These optional third-party tools are not downloaded or enabled by POW automatically.
 
+For dependency scheduling and asynchronous execution, read the [scheduler guide](commands/optimize-latency/references/scheduler.md). The [investigation method](commands/optimize-latency/references/investigation.md) explains timing attribution, concurrency settings, reproducibility, and the native integration boundary. The [2026-10-27 measurements](commands/optimize-latency/references/measurements-2026-10-27.md) record real Tool verification of three projects and distinguish it from synthetic workloads and full-turn latency.
+
+Install only this Skill with `node scripts/pow.mjs install --name optimize-latency`; use `update --name optimize-latency` for an owned installation. See the [file inventory](commands/optimize-latency/references/inventory.md) for Python/Node resources and the [native guide](commands/optimize-latency/native/README.md) for version-pinned Codex patches, Desktop inspection, isolated dispatch verification, activation, and rollback. Skill installation alone does not switch the running Desktop engine.
+
 ## Add a command manually
 
 Create `commands/<name>/SKILL.md` with lowercase kebab-case names and required `name` and `description` frontmatter. Then run:

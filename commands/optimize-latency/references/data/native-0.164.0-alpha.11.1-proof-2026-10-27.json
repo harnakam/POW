@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "artifact": "historical pre-cancellation-fix Desktop-matching v1 artifact; do not deploy",
+  "upstream": {
+    "repository": "https://github.com/openai/codex",
+    "tag": "rust-v0.164.0-alpha.11.1",
+    "commit": "6905ecede7816e91373e9eabda3f6b0368fc747b"
+  },
+  "binary": {
+    "size": 366075904,
+    "version": "0.164.0-alpha.11.1",
+    "sha256": "33df991bcfacc632d942a140b5a03ef68821eae36ff466ae21088ffe48a3f53b"
+  },
+  "patch": {
+    "path": "native/patches/codex-0.164.0-alpha.11.1-native-admission-v1.patch",
+    "sha256": "8e5544e74e2303194cac57a82708d7b0300db2b19bdf17f4056d50d28b1aa18e"
+  },
+  "scheduler": {
+    "primary_limit": "N",
+    "guardian_reserve": 1,
+    "scope": "process-wide native ToolRegistry leaf invocations",
+    "range": [
+      1,
+      1024
+    ],
+    "environment_variable": "CODEX_NATIVE_TOOL_CONCURRENCY"
+  },
+  "build": {
+    "command": "cargo +1.95.0 build -p codex-cli --bin codex",
+    "exit_code": 0,
+    "duration": "16m47s",
+    "toolchain": "Rust1.95.0"
+  },
+  "native_core_tests": {
+    "status": "historical pre-fix snapshot; current verified source tests recorded under current_source_candidate"
+  },
+  "end_to_end": {
+    "paid_model_requests": 0,
+    "command_exit_code": 0,
+    "model_requests": 2,
+    "native_limit": 1,
+    "status": "passed",
+    "review_limit": 1,
+    "limitation": "Direct native tool hidden by authoritative modelCodeModeOnly catalog; isolated fixture disables plugin startup and redirects ChatGPT base to loopback",
+    "windows_sandbox": "unelevated",
+    "mode": "code_mode"
+  },
+  "installed_msix": "OpenAI.Codex_26.1021.3705.0_x64__2p2nqsd0c76g0",
+  "upstream_binary_sha256": "1103e9e09c71fa2cd0afd6d8f3b9a2d63174fe8efd7cb5bd09f1cb14ef58a098",
+  "global_settings_changed": false,
+  "desktop_restarted": false,
+  "current_source_candidate": {
+    "patch": "native/patches/codex-0.164.0-alpha.11.1-native-admission.patch",
+    "sha256": "99b648ea8a035ea16c9413d773f5ab49df6cbbdefbb1102c4002c0d3c7345a7c",
+    "reason": "Queued dynamic-tool admission observes cancellation before a finishes_on_cancellation handler starts; running handler cancellation behavior preserved",
+    "source_tests": {
+      "status": "passed",
+      "test_count": 9,
+      "failures": 0,
+      "errors": 0,
+      "command": "cargo +1.95.0 test --offline -p codex-core --lib native_scheduler",
+      "reported_compile_duration": "4m07s",
+      "reported_test_duration": "0.40s",
+      "scope": "isolated native core tests; no whole-task speedup claim"
+    },
+    "source_review": "passed; no further actionable findings",
+    "binary_verified": false,
+    "release_build": {
+      "status": "running",
+      "profile": "release",
+      "note": "Previous debug artifact is superseded and must not be deployed"
+    }
+  }
+}

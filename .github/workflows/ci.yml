@@ -37,3 +37,5 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -B -m unittest discover -s test -p "test_cxd_*.py" -v
+      - run: python -B -m unittest discover -s test -p "test_native_*.py" -v
+      - run: python -B -m unittest discover -s test -p "test_measurement_*.py" -v

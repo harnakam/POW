@@ -1,0 +1,116 @@
+{
+  "recorded_at": "2026-10-27T08:19:36.993Z",
+  "node": "v24.14.0",
+  "concurrency": 2,
+  "jobs": [
+    {
+      "id": "independent-a",
+      "estimated_s": 0.06
+    },
+    {
+      "id": "independent-b",
+      "estimated_s": 0.06
+    },
+    {
+      "id": "chain-root",
+      "estimated_s": 0.01
+    },
+    {
+      "id": "chain-tail",
+      "depends_on": [
+        "chain-root"
+      ],
+      "estimated_s": 0.12
+    }
+  ],
+  "runs": [
+    {
+      "sample": 1,
+      "policy": "fifo",
+      "duration_ms": 215.89180000000002,
+      "start_order": [
+        "independent-a",
+        "independent-b",
+        "chain-root",
+        "chain-tail"
+      ]
+    },
+    {
+      "sample": 1,
+      "policy": "critical-path",
+      "duration_ms": 154.12990000000002,
+      "start_order": [
+        "chain-root",
+        "independent-a",
+        "chain-tail",
+        "independent-b"
+      ]
+    },
+    {
+      "sample": 2,
+      "policy": "critical-path",
+      "duration_ms": 142.79309999999998,
+      "start_order": [
+        "chain-root",
+        "independent-a",
+        "chain-tail",
+        "independent-b"
+      ]
+    },
+    {
+      "sample": 2,
+      "policy": "fifo",
+      "duration_ms": 200.19949999999994,
+      "start_order": [
+        "independent-a",
+        "independent-b",
+        "chain-root",
+        "chain-tail"
+      ]
+    },
+    {
+      "sample": 3,
+      "policy": "fifo",
+      "duration_ms": 200.39200000000005,
+      "start_order": [
+        "independent-a",
+        "independent-b",
+        "chain-root",
+        "chain-tail"
+      ]
+    },
+    {
+      "sample": 3,
+      "policy": "critical-path",
+      "duration_ms": 133.61919999999998,
+      "start_order": [
+        "chain-root",
+        "independent-a",
+        "chain-tail",
+        "independent-b"
+      ]
+    }
+  ],
+  "summaries": [
+    {
+      "policy": "fifo",
+      "n": 3,
+      "min_ms": 200.19949999999994,
+      "median_ms": 200.39200000000005,
+      "max_ms": 215.89180000000002
+    },
+    {
+      "policy": "critical-path",
+      "n": 3,
+      "min_ms": 133.61919999999998,
+      "median_ms": 142.79309999999998,
+      "max_ms": 154.12990000000002
+    }
+  ],
+  "caveats": [
+    "Synthetic fixed timer delays; this workload deliberately favors opening a long dependency chain.",
+    "Three samples per policy, same process; timer jitter, startup/JIT and host load are not controlled.",
+    "Measures scheduler makespan only; excludes model request, tool argument generation, network, and process startup.",
+    "No claim about Codex Desktop/backend performance or whole-task speedup; critical path is a heuristic, not an optimal schedule."
+  ]
+}
