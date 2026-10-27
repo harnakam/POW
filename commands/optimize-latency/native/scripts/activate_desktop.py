@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import threading
 
 OWNER = 'pow-desktop-native-activation-v1'
 NAMES = ('CODEX_CLI_PATH', 'CODEX_NATIVE_TOOL_CONCURRENCY')
@@ -247,6 +248,53 @@ def _disable(state, registry):
             'running_engine_verified': False}
 
 
+def broadcast_environment():
+    """Send only the standard environment-change notification; no registry writes."""
+    if os.name != 'nt':
+        raise OSError('Windows notification unavailable')
+    import ctypes
+    from ctypes import wintypes
+    send = ctypes.WinDLL('user32', use_last_error=True).SendMessageTimeoutW
+    send.argtypes = (wintypes.HWND, wintypes.UINT, wintypes.WPARAM,
+                     wintypes.LPARAM, wintypes.UINT, wintypes.UINT,
+                     ctypes.POINTER(ctypes.c_size_t))
+    send.restype = wintypes.LPARAM
+    text = ctypes.create_unicode_buffer('Environment')
+    response = ctypes.c_size_t()
+    ctypes.set_last_error(0)
+    delivered = send(0xffff, 0x001a, 0, ctypes.cast(text, ctypes.c_void_p).value,
+                     0x0002, 2000, ctypes.byref(response))  # SMTO_ABORTIFHUNG
+    return {'status': 'sent' if delivered else 'failed_or_timed_out',
+            'win32_error': 0 if delivered else ctypes.get_last_error()}
+
+
+def with_environment_notification(result, requested=False, send=None, deadline_s=3):
+    if not requested:
+        return result
+    if result['action'] not in ('enable', 'disable'):
+        raise ValueError('environment notification is supported only after enable or disable')
+    if not 0 < deadline_s <= 3:
+        raise ValueError('notification deadline must be positive and at most three seconds')
+    outcome = {}
+    def notify():
+        try:
+            outcome.update((send or broadcast_environment)())
+        except Exception as error:
+            outcome.update(status='failed', error_type=type(error).__name__)
+    # HWND_BROADCAST's native timeout is per window. Bound the whole wait too.
+    worker = threading.Thread(target=notify, daemon=True)
+    try:
+        worker.start()
+        worker.join(deadline_s)
+    except Exception as error:
+        outcome.update(status='failed', error_type=type(error).__name__)
+    notification = ({'status': 'wait_timed_out', 'delivery_unknown': True}
+                    if worker.is_alive() else dict(outcome))
+    return {**result, 'environment_notification': {
+        **notification, 'api_timeout_ms': 2000, 'wait_limit_ms': round(deadline_s * 1000),
+        'running_process_environment_changed': False}}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=('plan', 'enable', 'disable'))
@@ -254,8 +302,12 @@ def main(argv=None):
     parser.add_argument('--vendor-binary', type=Path)
     parser.add_argument('--concurrency', type=int, default=3)
     parser.add_argument('--state', type=Path, required=True)
+    parser.add_argument('--notify-environment', action='store_true',
+                        help='notify Windows after enable/disable; does not restart Desktop')
     args = parser.parse_args(argv)
     try:
+        if args.notify_environment and args.action == 'plan':
+            raise ValueError('--notify-environment cannot be used with plan')
         if os.name != 'nt':
             raise ValueError('real registry operations require Windows')
         if args.action != 'disable' and (args.binary is None or args.vendor_binary is None):
@@ -264,6 +316,7 @@ def main(argv=None):
         result = (disable(args.state, registry) if args.action == 'disable' else
                   globals()[args.action](args.binary, args.vendor_binary, args.concurrency,
                                          args.state, registry))
+        result = with_environment_notification(result, args.notify_environment)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:

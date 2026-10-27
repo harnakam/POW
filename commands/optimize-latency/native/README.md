@@ -106,7 +106,7 @@ enable済みの同じ設定は再実行しても上書きしない。状態フ�
 
 ## 起動環境と適用範囲
 
-環境変数は起動時に継承されるため、現在のDesktopには反映されない。この補助ツールはUIを閉じず、プロセスを強制終了せず、アプリを起動しない。Windowsの環境変更broadcastも送らないので、既存のExplorerや端末から起動すると古い環境が引き継がれる場合がある。更新されたユーザー環境を持つ起動元を使うか、必要ならサインアウト後に新しく起動する。単にウィンドウを閉じるだけでバックグラウンドプロセスが残るケースにも注意する。
+環境変数は起動時に継承されるため、現在のDesktopには反映されない。この補助ツールはUIを閉じず、プロセスを強制終了せず、アプリを起動しない。既定ではWindowsの環境変更broadcastも送らないので、既存のExplorerや端末から起動すると古い環境が引き継がれる場合がある。更新されたユーザー環境を持つ起動元を使うか、必要ならサインアウト後に新しく起動する。単にウィンドウを閉じるだけでバックグラウンドプロセスが残るケースにも注意する。
 
 CODEX_CLI_PATHを認識するDesktopと対応するネイティブパッチの組み合わせが必要。設定ファイル・マーカーの存在だけで全Tool経路が有効になったとは報告しない。新しいDesktop実行器の実パスと版を確認し、承認・サンドボックスを保ったまま、生Tool・Code Mode・待機経路のネイティブ検証を行って適用を判定する。
 
@@ -117,6 +117,21 @@ python -B -m unittest discover -s test -p "test_native_activation.py" -v
 ```
 
 検証コマンドはPOWリポジトリルートで実行する。activation例は本ディレクトリで実行する。テストはRegistry adapterとversion呼び出しをmockし、実際のレジストリ・グローバル設定・Desktopへ書き込まない。バージョン・ハッシュ・マーカー、型と不存在の復元、不正値、外部編集、同時操作、部分書き込み、復元失敗、状態保存失敗を確認する。これはネイティブ本体のテストとは別の検証。
+
+## 環境変更を任意でWindowsへ通知する
+
+enable/disableに `--notify-environment` を付けると、レジストリ操作の成功後だけ標準の `WM_SETTINGCHANGE`（文字列 `Environment`）をWindowsへbroadcastする。Explorer等が更新されたUser環境を読み直し、通常の新規起動へ反映しやすくするための任意機能。planとの組み合わせはレジストリへのアクセス前に拒否し、既定の通知なし動作は変えない。
+
+```powershell
+python -B scripts/activate_desktop.py enable --binary C:\native-build\codex.exe --vendor-binary C:\desktop-runtime\codex.exe --concurrency 3 --state C:\workspace\native-activation.json --notify-environment
+python -B scripts/activate_desktop.py disable --state C:\workspace\native-activation.json --notify-environment
+```
+
+通知には標準ライブラリctypesから `SendMessageTimeoutW`、`HWND_BROADCAST`、`SMTO_ABORTIFHUNG` を使い、APIのtimeoutは2秒。broadcastのtimeoutは各windowへ適用されるため、補助ツール側の待機もdaemon threadで最大3秒に制限する。実行中Desktopや既存PowerShellのProcess環境を変更・再起動する処理ではなく、通知成功でも全受信側の更新を保証しない。
+
+結果JSONの `environment_notification` は `sent`、`failed_or_timed_out`、`failed`、`wait_timed_out` を区別する。全体待機の期限切れでは `delivery_unknown: true` とし、通知が届かなかったと断定しない。通知の失敗・期限切れはレジストリ成功の `registry_configured` / `restored` と分けて記録し、成功済みの環境設定や復元をrollbackしない。通知だけの失敗でCLIを失敗終了にはしない。`running_engine_verified: false` と `restart_required: true` も維持する。通知要求を省略した結果には追加fieldを出さない。
+
+この通知を使っても、次節の2値だけをコピーする明示的な新規起動手順は利用できる。テストではRegistryとWindows APIをmockし、実レジストリ・実通知は実行しない。
 
 ## 新しいDesktopプロセスへ2値だけ渡す
 

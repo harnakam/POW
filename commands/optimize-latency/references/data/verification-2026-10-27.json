@@ -1,14 +1,37 @@
 {
   "date": "2026-10-27",
-  "node": {"tests": 37, "failed": 0},
-  "python_cxd": {
-    "windows": {"run": 44, "skipped": 2, "failed": 0},
-    "linux_wsl_native_filesystem": {"run": 44, "skipped": 1, "failed": 0}
+  "node": {
+    "tests": 37,
+    "failed": 0
   },
-  "python_native_helpers": {"windows_run": 21, "linux_run": 21, "failed": 0},
-  "python_measurement": {"windows_run": 10, "linux_run": 10, "failed": 0},
+  "python_cxd": {
+    "windows": {
+      "run": 44,
+      "skipped": 2,
+      "failed": 0
+    },
+    "linux_wsl_native_filesystem": {
+      "run": 44,
+      "skipped": 1,
+      "failed": 0
+    }
+  },
+  "python_native_helpers": {
+    "windows_run": 26,
+    "linux_run": 26,
+    "failed": 0
+  },
+  "python_measurement": {
+    "windows_run": 10,
+    "linux_run": 10,
+    "failed": 0
+  },
   "example_project_tests": 19,
-  "native_source_tests": {"0.156.1": 9, "0.164.0-alpha.11.1": 9, "failed": 0},
+  "native_source_tests": {
+    "0.156.1": 9,
+    "0.164.0-alpha.11.1": 9,
+    "failed": 0
+  },
   "repository_skill_validation": 13,
   "github_ci": {
     "commit": "ca733da1321a3d556a24879f61763338a8110492",

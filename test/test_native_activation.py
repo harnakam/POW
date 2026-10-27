@@ -1,10 +1,15 @@
 import copy
+import contextlib
+import ctypes
+from ctypes import wintypes
 import hashlib
+import io
 import json
 from pathlib import Path
 import tempfile
+import threading
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import importlib.util
 SCRIPT = Path(__file__).resolve().parents[1] / 'commands/optimize-latency/native/scripts/activate_desktop.py'
@@ -193,6 +198,62 @@ class ActivationTests(unittest.TestCase):
     def test_markers_across_stream_chunk_boundary(self):
         self.binary.write_bytes(b'x' * (1024 * 1024 - 5) + b' '.join(a.MARKERS))
         self.assertEqual(a.fingerprint(self.binary)[1], set(a.MARKERS))
+
+    def test_notification_is_opt_in_and_separate_from_registry_result(self):
+        enabled = self.enable()
+        send = Mock(return_value={'status': 'sent', 'win32_error': 0})
+        self.assertIs(a.with_environment_notification(enabled, send=send), enabled)
+        send.assert_not_called()
+        result = a.with_environment_notification(enabled, True, send)
+        self.assertEqual(result['status'], 'registry_configured')
+        self.assertEqual(result['environment_notification']['status'], 'sent')
+        self.assertFalse(result['running_engine_verified'])
+        self.assertFalse(result['environment_notification']['running_process_environment_changed'])
+
+    def test_notification_failures_do_not_rollback_successful_registry_writes(self):
+        enabled = self.enable()
+        configured = copy.deepcopy(self.reg.values)
+        send = Mock(side_effect=OSError('mock notification error'))
+        result = a.with_environment_notification(enabled, True, send)
+        self.assertEqual(result['status'], 'registry_configured')
+        self.assertEqual(result['environment_notification']['status'], 'failed')
+        self.assertEqual(self.reg.values, configured)
+        self.assertTrue(self.state.exists())
+        restored = a.disable(self.state, self.reg)
+        result = a.with_environment_notification(restored, True, send)
+        self.assertEqual(result['status'], 'restored')
+        self.assertEqual(result['environment_notification']['status'], 'failed')
+        self.assertFalse(self.state.exists())
+
+    def test_notification_total_wait_is_bounded_and_delivery_unknown_after_timeout(self):
+        release = threading.Event()
+        try:
+            result = a.with_environment_notification(
+                {'action': 'enable', 'status': 'registry_configured'}, True,
+                lambda: (release.wait(2) and {'status': 'sent'}), deadline_s=.01)
+            self.assertEqual(result['environment_notification']['status'], 'wait_timed_out')
+            self.assertTrue(result['environment_notification']['delivery_unknown'])
+        finally:
+            release.set()
+
+    def test_plan_rejects_notification_before_registry_access(self):
+        with patch.object(a, 'Registry') as registry, contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(a.main(['plan', '--state', str(self.state), '--notify-environment']), 1)
+        registry.assert_not_called()
+
+    def test_standard_environment_message_uses_mocked_windows_api_only(self):
+        captured = {}
+        def send(*args):
+            captured.update(hwnd=args[0], message=args[1], text=ctypes.wstring_at(args[3]),
+                            flags=args[4], timeout=args[5])
+            return 1
+        library = Mock()
+        library.SendMessageTimeoutW = Mock(side_effect=send)
+        with patch.object(ctypes, 'WinDLL', return_value=library, create=True), \
+                patch.object(ctypes, 'set_last_error', create=True), patch.object(a.os, 'name', 'nt'):
+            self.assertEqual(a.broadcast_environment()['status'], 'sent')
+        self.assertEqual(captured, {'hwnd': 0xffff, 'message': 0x001a, 'text': 'Environment',
+                                    'flags': 0x0002, 'timeout': 2000})
 
 
 if __name__ == '__main__':
