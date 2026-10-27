@@ -117,3 +117,9 @@ ctx wait RUN_ID --workspace examples/scheduler-tasks --timeout 90
 Codexでは短命なshellの終了時に子プロセスが停止される環境がある。`--attached --compact` でexecセッションを維持し、同梱 `scripts/cxd/bridge.js` の `functions.exec` / `yield_control` / `notify` を使う。待機はruntime内に置き、モデルによる反復ポーリングを避ける。単にバックグラウンド起動するだけで実行継続を保証しない。
 
 新版インストーラーはcxdとctxの両shimを管理する。既知の旧版所有記録は更新できるが、記録のないctxなどは上書きしない。既存の独自cxdがある場合は `--bin-dir` と `--package-dir` を別ディレクトリに指定して試す。
+
+## Windows応答ファイルの共有競合
+
+CIで応答JSONが存在しても`read_text`がPermissionErrorになるケースを確認した。stop応答を読めず、所有する子プロセスの終了待ちへ到達しないため、cleanupのworker.log/worker.lock占有エラーも連鎖した。実際にハンドルを保持したプロセスはCIログだけでは特定できない。
+
+同じUUIDの応答read/unlinkだけを、既存の要求期限内で最大10ms刻みに再試行する。コマンドを再送せず、恒久拒否は元の例外で失敗し、権限を緩めない。共有ハンドルのcloseではファイル通知が必ず発生するわけではないため、この局所待機は通知待ちと区別する。実CreateFileWで共有を拒否した回復、stop時の一過性拒否と子の終了、期限と元例外保持を回帰テストで確認する。

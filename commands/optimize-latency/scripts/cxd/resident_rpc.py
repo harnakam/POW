@@ -153,6 +153,25 @@ def acquire_lock(path):
     return stream
 
 
+def response_io(operation, deadline):
+    """A visible rename can still have a transient Windows sharing handle.
+
+    Retry only access/sharing failures, within the caller's existing timeout.
+    Notifications alone cannot help: the rename notification may already have
+    been consumed and closing a sharing handle does not emit another one.
+    """
+    while True:
+        try:
+            return operation()
+        except PermissionError as error:
+            if os.name != 'nt' or getattr(error, 'winerror', None) not in (None, 5, 32, 33):
+                raise
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise
+            time.sleep(min(.01, remaining))
+
+
 def request(root, operation, parameters=None, *, timeout=30, start=True):
     root = Path(root).resolve()
     info = state_info(root)
@@ -189,8 +208,8 @@ def request(root, operation, parameters=None, *, timeout=30, start=True):
             if remaining <= 0:
                 raise TimeoutError(f'resident operation {operation} timed out; see {state / "worker.log"}')
             changes.wait(remaining)
-        result = json.loads(response_path.read_text(encoding='utf-8'))
-        response_path.unlink()
+        result = json.loads(response_io(lambda: response_path.read_text(encoding='utf-8'), deadline))
+        response_io(response_path.unlink, deadline)
         if not result['ok']:
             raise RuntimeError(result['error'])
         if operation == 'stop':

@@ -5,15 +5,98 @@ from pathlib import Path
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'commands/optimize-latency/scripts/cxd'))
 from resident import ProjectIndex, atomic_json, verify_timing
-from resident_rpc import Changes, acquire_lock, alive, directories, request
+from resident_rpc import Changes, acquire_lock, alive, directories, request, response_io
 
 
 class PlatformTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == 'nt', 'Windows sharing semantics')
+    def test_response_read_recovers_after_real_windows_sharing_handle_closes(self):
+        import ctypes
+        from ctypes import wintypes
+        api = ctypes.WinDLL('kernel32', use_last_error=True)
+        api.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                   ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+        api.CreateFileW.restype = wintypes.HANDLE
+        api.CloseHandle.argtypes = [wintypes.HANDLE]
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as directory:
+            path = Path(directory) / 'response.json'
+            atomic_json(path, {'ok': True})
+            handle = api.CreateFileW(str(path), 0x80000000, 0, None, 3, 0, None)
+            self.assertNotEqual(handle, ctypes.c_void_p(-1).value)
+            blocked = threading.Event()
+
+            def release():
+                blocked.wait(2)
+                api.CloseHandle(handle)
+
+            owner = threading.Thread(target=release)
+            owner.start()
+
+            def read():
+                try:
+                    return path.read_text(encoding='utf-8')
+                except PermissionError:
+                    blocked.set()
+                    raise
+
+            try:
+                self.assertEqual(json.loads(response_io(read, time.monotonic() + 3)), {'ok': True})
+                self.assertTrue(blocked.is_set())
+            finally:
+                blocked.set()
+                owner.join(timeout=3)
+            self.assertFalse(owner.is_alive())
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows sharing semantics')
+    def test_stop_retries_visible_response_sharing_race_and_waits_for_child(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as directory:
+            root = Path(directory)
+            request(root, 'status', timeout=5)
+            original_read = Path.read_text
+            original_unlink = Path.unlink
+            denied = {'read': 0, 'unlink': 0}
+
+            def read(path, *args, **kwargs):
+                if path.parent.name == 'responses' and not denied['read']:
+                    denied['read'] += 1
+                    raise PermissionError(13, 'injected transient sharing violation')
+                return original_read(path, *args, **kwargs)
+
+            def unlink(path, *args, **kwargs):
+                if path.parent.name == 'responses' and path.suffix == '.json' and not denied['unlink']:
+                    denied['unlink'] += 1
+                    raise PermissionError(13, 'injected transient sharing violation')
+                return original_unlink(path, *args, **kwargs)
+
+            try:
+                with patch.object(Path, 'read_text', read), patch.object(Path, 'unlink', unlink):
+                    stopped = request(root, 'stop', start=False, timeout=5)
+                self.assertEqual(denied, {'read': 1, 'unlink': 1})
+                self.assertFalse(alive(stopped['worker_pid']))
+                self.assertFalse((root / '.cxd/worker.json').exists())
+            finally:
+                request(root, 'stop', start=False, timeout=5)
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows sharing semantics')
+    def test_response_sharing_retry_is_bounded_and_does_not_hide_other_errors(self):
+        denied = PermissionError(13, 'persistent access denial')
+        with patch('resident_rpc.time.monotonic', side_effect=[10, 10.01]), patch('resident_rpc.time.sleep') as sleep:
+            with self.assertRaises(PermissionError) as caught:
+                response_io(lambda: (_ for _ in ()).throw(denied), 10.005)
+            self.assertIs(caught.exception, denied)
+            sleep.assert_called_once()
+            self.assertLessEqual(sleep.call_args.args[0], .0051)
+        with patch('resident_rpc.time.sleep') as sleep:
+            with self.assertRaises(FileNotFoundError):
+                response_io(lambda: (_ for _ in ()).throw(FileNotFoundError()), time.monotonic() + 1)
+            sleep.assert_not_called()
+
     def test_index_reuses_unchanged_content_and_invalidates_edits(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parent) as directory:
             root = Path(directory).resolve()
