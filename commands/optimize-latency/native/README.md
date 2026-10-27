@@ -178,3 +178,11 @@ python -B commands/optimize-latency/native/scripts/prove_native_dispatch.py --bi
 ```
 
 fixtureは本物のモデル性能を測るものではない。実プロセス・Tool経路・sandbox実行をローカルの固定応答で検証する。出力にはローカルパスと実行ログを含むので公開前に集約する。`direct`は版のcatalog次第で利用できず、0.164ではCode Mode経路を検証した。receiptは成果物照合であり、第三者の署名による配布証明ではない。
+
+### Windowsビルドの調査上の注意
+
+Cargoは作業ディレクトリから`.cargo/config.toml`を探索する。親workspaceから`--manifest-path`だけ渡す実行と、`codex-rs`へ移動した実行は同条件ではない。今回の正式ビルドは`codex-rs`をcwdとし、公式MSVCのstack設定と`+crt-static`を適用する。誤ったcwdで開始した試行は停止し、別ログとして保持した。
+
+対象タグのCargo.lockにはworkspace packageの版が0.0.0のものが残り、Cargoが166項目を0.164.0-alpha.11.1へ正規化した。削除・追加行の対応を確認し、外部依存の変更はなかった。これはnative schedulerの差分とは別の生成差分として記録する。
+
+サンドボックス内でvendored protocがWindows DLL再配置エラー623を返した試行は、同じ実行ファイルの`--version`を承認された通常実行で比較し、そちらは`libprotoc 31.1`で成功した。source、認証、sandbox設定の恒久的な変更で回避せず、ビルド処理を適切な権限経路で実行する。失敗時間も調査費用であり、schedulerの処理時間やモデル推論時間へ分類しない。
