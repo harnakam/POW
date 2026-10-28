@@ -43,8 +43,8 @@
   },
   "repository_skill_validation": 13,
   "github_ci": {
-    "commit": "17ae2de26a00135d671450605ba69a25bcb09c83",
-    "url": "https://github.com/harnakam/POW/actions/runs/40498020468",
+    "commit": "64ccbce7964df3823c2dca12f3e6b7c3fd8ff268",
+    "url": "https://github.com/harnakam/POW/actions/runs/40500892040",
     "conclusion": "success",
     "matrix": "Node20/22 on Windows/Linux/macOS; Python3.10/3.12 on Windows/Linux"
   },
@@ -57,12 +57,17 @@
   ],
   "deployment": {
     "new_skill": "optimize-latency",
-    "user_environment_override_applied": false,
+    "user_environment_override_applied": true,
     "running_desktop_verified": false,
-    "release_binary_verified": false,
+    "release_binary_verified": true,
     "skill_python_cache_resources": 0,
     "legacy_cxd_runtime_updated": true,
-    "global_operating_policy_blocks_verified": 3
+    "global_operating_policy_blocks_verified": 3,
+    "date": "2026-10-28",
+    "restart_required": true,
+    "concurrency": 16,
+    "guardian_reserve": 1,
+    "environment_notification": "sent"
   },
   "limitations": [
     "Counts describe the listed suites, not the entire upstream Codex test suite",

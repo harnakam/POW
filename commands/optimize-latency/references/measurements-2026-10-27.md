@@ -62,3 +62,7 @@ proxyとは別に、Desktop対応版0.164.0-alpha.11.1のnative dispatch admissi
 Windows応答ファイルの共有競合を追加CIで確認し、要求期限内のread/unlinkだけを再試行する修正を追加した。実共有ハンドル・stop時の回復・期限上限の3回帰を加えた最終cxdは47件（Windows2件skip、Linux4件skip）。修正後の全CIが成功した。ハンドル保持プロセスの正体は未特定で、恒久拒否を成功扱いにする変更はない。
 
 Skill配布sourceのPython cache混入も修正した。source除外・旧所有cache移行・未所有cache保護・source symlink拒否を加えたNode最終検証は41件すべて成功（Windowsの承認された通常実行、一時領域はworkspace内）。インストール先の所有検査は除外しない。
+
+## 2026-10-28: releaseと次回起動用設定
+
+修正後releaseのビルドと、unelevated/MXCを明示選択した実dispatchが両方成功した。各2回のloopback provider要求・有料モデル要求0回、実command exit0、native admissionを確認。User環境へ通常16枠＋Guardian予約1の実行器設定を保存し、Windows通知と2値の再照合が成功した。稼働Desktopの切り替えと再起動後の実測は未実施。既存の3.90倍のTool比較はnative版の速度比較へ読み替えない。[release記録](data/native-release-2026-10-28.json)に版・SHA・compiler差・スリープ区間を保存した。

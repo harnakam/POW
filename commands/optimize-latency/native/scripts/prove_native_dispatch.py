@@ -79,7 +79,7 @@ class Fixture(http.server.BaseHTTPRequestHandler):
         return {"id": "native_fixture_message", "type": "message", "role": "assistant", "status": "completed", "content": [{"type": "output_text", "text": text, "annotations": []}]}
 
 
-def prove(binary: Path, mode: str, output: Path) -> dict:
+def prove(binary: Path, mode: str, output: Path, windows_sandbox: str = "unelevated") -> dict:
     case = output / mode
     home = case / "codex-home"
     workspace = case / "workspace"
@@ -94,7 +94,9 @@ def prove(binary: Path, mode: str, output: Path) -> dict:
     provider = '{name="Native local fixture",base_url="http://127.0.0.1:' + str(server.server_port) + '/v1",wire_api="responses",requires_openai_auth=false,supports_websockets=false}'
     overrides = ["model_provider=native_fixture", "model_providers.native_fixture=" + provider, f'model="{MODEL}"', "features.apps=false", "features.plugins=false", "analytics.enabled=false", 'chatgpt_base_url="http://127.0.0.1:' + str(server.server_port) + '"', "features.unified_exec=true", "features.code_mode=" + str(mode == "code_mode").lower(), "features.code_mode_only=" + str(mode == "code_mode").lower()]
     if os.name == "nt":
-        overrides.append('windows.sandbox="unelevated"')
+        overrides.append(f'windows.sandbox="{windows_sandbox}"')
+        if windows_sandbox == "mxc":
+            overrides.append("features.prefer_mxc=true")
     arguments = [str(binary)]
     for override in overrides:
         arguments.extend(["-c", override])
@@ -155,7 +157,7 @@ def prove(binary: Path, mode: str, output: Path) -> dict:
                 return message
         raise TimeoutError("native local fixture exceeded 60 seconds")
 
-    result = {"mode": mode, "api_requests": 0, "paid_model_requests": 0, "network_target": "loopback fixture only", "global_configuration_changed": False}
+    result = {"mode": mode, "windows_sandbox": windows_sandbox if os.name == "nt" else None, "api_requests": 0, "paid_model_requests": 0, "network_target": "loopback fixture only", "global_configuration_changed": False}
     try:
         send({"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "native-scheduler-proof", "version": "1"}, "capabilities": {"experimentalApi": True}}})
         receive(1)
@@ -185,7 +187,14 @@ def prove(binary: Path, mode: str, output: Path) -> dict:
     result["command_items"] = commands
     result["native_admission_trace"] = [line for line in errors if "native tool scheduler admitted invocation" in line]
     result["native_enabled_trace"] = [line for line in errors if "native tool scheduler enabled" in line]
+    sandbox_selections = []
+    for sandbox_log in sorted((home / ".sandbox").glob("sandbox.*.log")):
+        sandbox_selections.extend(line for line in sandbox_log.read_text(encoding="utf-8", errors="replace").splitlines() if "Windows sandbox selection:" in line)
+    result["sandbox_selection_trace"] = sandbox_selections
+    result["selected_windows_sandbox"] = sandbox_selections[-1].rsplit(": ", 1)[-1] if sandbox_selections else None
     result["success"] = bool("error" not in result and result.get("completion", {}).get("params", {}).get("turn", {}).get("status") == "completed" and not state.get("fixture_error") and len(state["requests"]) >= 2 and result["native_admission_trace"] and any(item.get("exitCode") == 0 and item.get("aggregatedOutput", "").strip() == MARKER for item in commands))
+    if os.name == "nt" and windows_sandbox == "mxc":
+        result["success"] = result["success"] and result["selected_windows_sandbox"] == "mxc"
     (case / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     return result
 
@@ -194,9 +203,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path, default=ROOT / "package/bin/codex.exe")
     parser.add_argument("--receipt", type=Path, default=ROOT / "build-receipt.json")
-    parser.add_argument("--output", type=Path, default=ROOT / ("dispatch-proof-" + time.strftime("%Y%m%d-%H%M%S")))
+    parser.add_argument("--output", type=Path, required=True, help="New local output directory outside installed skill resources")
     parser.add_argument("--mode", choices=("direct", "code_mode", "both"), default="both")
+    parser.add_argument("--windows-sandbox", choices=("unelevated", "mxc"), default="unelevated", help="Windows backend for the isolated child; mxc requires the existing service and never falls back")
     args = parser.parse_args()
+    if args.windows_sandbox == "mxc" and os.name != "nt":
+        parser.error("mxc requires Windows")
     receipt = json.loads(args.receipt.read_text(encoding="utf-8-sig"))
     digest = hashlib.sha256()
     with args.binary.open("rb") as stream:
@@ -206,7 +218,7 @@ def main() -> int:
         parser.error("binary does not match the native build receipt")
     args.output.mkdir(parents=True, exist_ok=False)
     modes = ("direct", "code_mode") if args.mode == "both" else (args.mode,)
-    results = [prove(args.binary.resolve(), mode, args.output) for mode in modes]
+    results = [prove(args.binary.resolve(), mode, args.output, args.windows_sandbox) for mode in modes]
     print(json.dumps({"output": str(args.output), "cases": [{"mode": result["mode"], "success": result["success"], "error": result.get("error"), "api_requests": result["api_requests"]} for result in results]}))
     return 0 if all(result["success"] for result in results) else 1
 

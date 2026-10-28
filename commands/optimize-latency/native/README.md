@@ -8,15 +8,17 @@
 | --- | --- | --- |
 | CLI 0.156.1 | 8 native tests、直接ToolとCode Modeのsandbox検証成功 | 過去の独立CLI。本番Desktop用として使わない |
 | Desktop対応 0.164.0-alpha.11.1 | 実行器ビルド成功、実Code Mode→exec_command→Windows unelevated sandboxで終了コード0 | 版一致するカスタム実行器の隔離検証。live Desktop未切り替え |
-| Desktop対応版の正式release build | キャンセル修正後のsourceでビルド中。実行は未検証 | 完了・再検証まで常用切り替えしない |
+| Desktop対応版の正式release build | 完成。unelevated・MXC両経路で実コマンドexit0、native admission確認 | 修正後releaseの隔離検証成功。live Desktopは再起動待ち |
 | Desktop対応版のnative tests | 初期8件成功後、レビューで待機中キャンセルを修正。追加回帰を含む9件成功 | 修正後sourceの検証。旧exeの再利用を意味しない |
-| Desktopユーザー環境への設定 | activation helperを提供。実環境enableは未実行 | 次の新規プロセス用設定であり、実行中エンジンの証明ではない |
+| Desktopユーザー環境への設定 | 2026-10-28にenable・Windows通知・User値の照合が成功 | 次回起動用設定済み。現Desktopは未切り替え |
 
-下記exe/patchのSHAは初期dev版の履歴である。修正後patchと検証状況は同梱proof JSONの`current_source_candidate`で区別する。
+最終releaseの証拠は[2026-10-28の記録](../references/data/native-release-2026-10-28.json)。exe SHA-256は`15d458361b6d972f3b8b25755049dc25534de02a65c6cb868cbe7527c8b6bcbd`、修正後patch SHA-256は`99b648ea8a035ea16c9413d773f5ab49df6cbbdefbb1102c4002c0d3c7345a7c`。通常Tool上限16、Guardian予約1で次回Desktop起動の実行器を設定し、2値を再読取して一致を確認した。16は親＋最大15 Agentを妨げにくくする設定上の選択で、最適値を比較実験で求めた数ではない。別プロセス・ExecServerのみの経路・provider hosted Toolまで制御する意味ではない。
+
+下記exe/patchのSHAは初期dev版の履歴である。27日のproof JSONは当時の状態を残し、最終releaseは28日の別記録で区別する。
 
 Desktop対応版の基点は公式タグ `rust-v0.164.0-alpha.11.1`、commit `6905ecede7816e91373e9eabda3f6b0368fc747b`。調査時のvendor exe SHA-256は `1103e9e09c71fa2cd0afd6d8f3b9a2d63174fe8efd7cb5bd09f1cb14ef58a098`、ビルドしたカスタムexeは `33df991bcfacc632d942a140b5a03ef68821eae36ff466ae21088ffe48a3f53b`。patch SHA-256は `8e5544e74e2303194cac57a82708d7b0300db2b19bdf17f4056d50d28b1aa18e`。再ビルド結果のハッシュが同じになる保証ではない。
 
-カスタム実行器はRust 1.95で `cargo +1.95.0 build -p codex-cli --bin codex` を実行して成功。これはdev opt0版のE2E確認用ビルドで、最適化済みreleaseの速度測定ではない。元のvendor releaseより遅くなる恐れがあるため、このdev版へ常用切り替えしない。レビューで待機中キャンセルを修正し、追加回帰を含む9件が成功した。その修正済みsourceで正式な `--release` ビルドを開始した。完了・実行検証前の段階では有効化しない。dev版のE2E成功をrelease版の稼働確認として扱わない。同じ版のDesktop helper群5ファイルを変更せず対応させた実行パッケージで隔離検証した。exeだけを違う版のhelper群と混ぜない。exeやユーザー設定バックアップはGitへ同梱しない。
+カスタム実行器はRust 1.95で `cargo +1.95.0 build -p codex-cli --bin codex` を実行して成功。これはdev opt0版のE2E確認用ビルドで、最適化済みreleaseの速度測定ではない。元のvendor releaseより遅くなる恐れがあるため、このdev版へ常用切り替えしない。レビューで待機中キャンセルを修正し、追加回帰を含む9件が成功した。修正済みsourceの正式な `--release` ビルドと両sandbox経路の実行確認は28日に完了した。最終配置先でもMXC経路を再確認してから次回起動用設定を反映した。dev版のE2E成功をrelease版の稼働確認として扱わない。同じ版のDesktop helper群5ファイルを変更せず対応させた実行パッケージで隔離検証した。exeだけを違う版のhelper群と混ぜない。exeやユーザー設定バックアップはGitへ同梱しない。
 
 ## 何を自動的に制限するか
 
@@ -58,7 +60,7 @@ node scripts/pow.mjs update --name optimize-latency
 
 # Desktop用ネイティブ実行器の明示的な切り替え
 
-`activate_desktop.py` はWindowsのユーザー環境変数を使い、**次の新しいDesktopプロセス**が使う実行器を選ぶ補助ツール。現在動いているDesktopを切り替えるものではない。この作業では実環境のenable、Desktop終了・再起動は実行していない。
+`activate_desktop.py` はWindowsのユーザー環境変数を使い、**次の新しいDesktopプロセス**が使う実行器を選ぶ補助ツール。現在動いているDesktopを切り替えるものではない。今回の端末ではenableと環境通知を実行済みで、Desktop終了・再起動は未実施。以下のconcurrency=3は一般例であり、既存の所有stateがある場合はその値（今回16）と一致させる。
 
 調査対象のDesktop同梱実行器は `codex-cli 0.164.0-alpha.11.1`。以前調査したCLI `0.156.1` とは互換性確認の対象版が異なる。カスタム版は実際に使うDesktop同梱vendor実行器との `--version` 完全一致を必須とし、古いCLIのパッチをそのまま接続しない。対象のソース版、ビルド、ネイティブ実行テストの証拠は別途確認する。バイナリがまだ生成・検証できない時点ではplanも成功しない。
 
@@ -203,3 +205,15 @@ Cargoは作業ディレクトリから`.cargo/config.toml`を探索する。親w
 サンドボックス内でvendored protocがWindows DLL再配置エラー623を返した試行は、同じ実行ファイルの`--version`を承認された通常実行で比較し、そちらは`libprotoc 31.1`で成功した。source、認証、sandbox設定の恒久的な変更で回避せず、ビルド処理を適切な権限経路で実行する。失敗時間も調査費用であり、schedulerの処理時間やモデル推論時間へ分類しない。
 
 正式releaseビルド中の一回の資源観測では、端末RAM31.22GiBに対し空き0.71GiB、rustcのworking set18.97GiB・private memory25.66GiBだった。累積CPU時間は5225秒（複数coreの合計であり壁時計ではない）。メモリー余裕が少ない状態を確認したが、単一snapshotから遅延の何%がpagingだったかは求めない。他の重いbuildを追加せず、ユーザーのアプリ・WSL・保護設定を停止/変更して数値を改善する操作は行わなかった。
+
+### スリープを計算時間へ混ぜない
+
+今回の継続ビルドでは日付変更後もprocessが残っていた。WindowsのSystemログ（Power-Troubleshooter、event1）のSleepTime/WakeTimeから、途中に13時間41分52秒のスリープ区間を確認した。再開後は同じrustcが1秒あたり約1.83秒の累積CPUを使っていた。これは複数coreで稼働している観測であり、14時間超の壁時計を全てコンパイラーやモデルの処理時間とは扱わない。
+
+監査ではowned PIDの開始時刻・CPU増分、buildログ末尾、成果物の有無、OSのsleep/resumeイベントを組み合わせた。SleepTime/WakeTimeには端末利用時刻が含まれるため、公開版には期間だけを残す。電源設定を変えていない。ビルド結果のraw経過時間と、スリープを除いた概算覚醒時間も区別する。CPU時間の合計をそのまま壁時計から引かない。
+
+コンパイラーの差も残る。対象sourceのrust-toolchain.tomlは1.99.1を指定しているが、この検証は既存の追加済み1.95を使った。1.99.1が入手不可だったという証拠はない。1.95でdev・core tests・releaseの主要crateが通ったことは、その版が最低要件だという保証でも、推奨toolchainとの性能比較でもない。特にLTO時間への影響は未比較である。再現時はこの差を記録し、推奨版を使う場合も新しいbuild/proofとして保存する。
+
+## 版固定overrideの更新時の扱い
+
+User環境のCODEX_CLI_PATHはDesktop更新後も残る。現在版との一致を確認するplanはenable時・明示的な起動前に実行するもので、通常のショートカット起動に将来の自動互換性判定を追加したものではない。Desktop更新時はoverrideをdisableし、新vendor版に合わせて再build・proof・enableする。署名付きWindowsApps本体と自動更新設定は変更していない。

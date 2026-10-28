@@ -91,3 +91,9 @@ python -B -m unittest discover -s test -p "test_measurement*.py" -v
 ```
 
 同梱テストは架空の機密文字列を含むローカルfixtureで、選択したturnの範囲、重なりと算術、識別子・本文の非出力、DBの不変性、WAL拒否、暫定pending、不完全な最終行、曖昧なdispatch、baseline保護を確認する。実ユーザーの会話やDBはテストで読まない。
+
+### UIに見えるコマンド長とモデル引数を分ける
+
+シェルカードには、モデルが渡した`cmd`に加えて、実行器が選んだPowerShellの絶対パス、起動オプション、引用符を含む解決後のコマンドが表示されることがある。今回のTool要求でも、短い`cmd`がUI記録では長いPowerShell呼び出しへ展開された。カードの全長をそのままモデルが生成した文字数として数えない。
+
+raw response_itemのinput/arguments、実際のTool要求、実行後カードのcommandを対応させる。alias/保存スクリプトは繰り返すモデル引数を短くできるが、ホストが表示する外側のruntimeパスまで消す仕組みではない。両者の差を確認してから、引数生成・輸送・プロセス起動のどこを改善したか判断する。
