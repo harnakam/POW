@@ -408,7 +408,7 @@ function usage() {
     "  validate    Validate repository commands",
     "",
     "--name NAME limits install or update to one repository command.",
-    "Runtime: /update, /compressor, /hatarake, /design-reasoning <arguments>",
+    "Runtime: /update, /compressor, /hatarake, /design-reasoning, /hooks <arguments>",
     "Example: node scripts/pow.mjs /update scan --root .",
   ].join("\n");
 }
@@ -431,6 +431,15 @@ export async function run(args, options = {}) {
     manifestPath: path.join(codexHome, ".pow", "manifest.json"),
   };
   try {
+    if (args[0] === "/hooks") {
+      return await new Promise((resolve, reject) => {
+        const python = process.env.POW_PYTHON ?? (process.platform === "win32" ? "python" : "python3");
+        const child = spawn(python, ["-B", path.join(repoRoot, "commands", "optimize-latency", "scripts", "cxd", "dispatch.py"), "hooks", ...args.slice(1)],
+          { stdio: "inherit", shell: false });
+        child.once("error", reject);
+        child.once("exit", (code) => resolve(code ?? 1));
+      });
+    }
     const runtime = new Map([
       ["/update", "update"], ["/compressor", "compressor"],
       ["/hatarake", "hatarake"], ["/design-reasoning", "design-reasoning"],

@@ -13,6 +13,8 @@ Use `$<name>` in Codex. In a clone, `node scripts/pow.mjs /<name> ...` dispatche
 
 All state should remain private and ignored. Reports can contain paths, command arguments, source observations, task text or screenshots. These are local trusted-workspace tools, not security sandboxes against adversarial concurrent filesystem manipulation. Review inputs and use disposable authorized data for browser actions. No automatic payment, promotion or commercial agreement is performed.
 
+Optional [per-hook scheduling](../commands/optimize-latency/references/hooks.md) reuses cxd with `node scripts/pow.mjs /hooks ...`: configure sync/async per hook, explicit required join events, failures, resource claims and input freshness. `profile` reports observed time and reviewed configuration candidates. Hosts must explicitly emit events; installation does not register native hooks.
+
 ## Design decisions from research
 
 - [Workflow research](research/2026-10-30-update.md): prefer source-located declarations and observed exit outcomes over an agent's recollection. CI job declaration order is only inferred: conditionals, matrices, action implementations and cross-job dependencies are unresolved. Changed inputs invalidate runnable plans; failures remain evidence rather than triggers for blind retries. Ordered build → publish preparation is inspectable, but whole sequences are not automatically executed.

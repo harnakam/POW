@@ -11,7 +11,7 @@ sys.dont_write_bytecode = True
 from resident import inside
 from resident_rpc import directories, request, serve, state_info
 
-BUILTINS = {'init', 'aliases', 'serve', 'start', 'status', 'stop', 'index', 'symbols', 'tree', 'plan', 'wait', 'result'}
+BUILTINS = {'init', 'aliases', 'serve', 'start', 'status', 'stop', 'index', 'symbols', 'tree', 'plan', 'wait', 'result', 'hooks'}
 
 
 def configuration(root):
@@ -77,6 +77,14 @@ def run_preset(root, name, output=None, concurrency=3, emit_events=False, extra_
 
 
 def main(argv=None):
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    prefix = argparse.ArgumentParser(add_help=False)
+    prefix.add_argument('--workspace', type=Path)
+    prefix.add_argument('command', nargs='?')
+    leading, remaining = prefix.parse_known_args(arguments)
+    if leading.command == 'hooks':
+        from hooks import main as hook_main
+        return hook_main(remaining + (['--workspace', str(leading.workspace)] if leading.workspace else []))
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', nargs='?', default='aliases')
     parser.add_argument('argument', nargs='?')
@@ -102,7 +110,7 @@ def main(argv=None):
             result = {'configured': str(root)}
         elif args.command == 'aliases':
             config = configuration(root)
-            result = {'commands': ['init', 'index', 'symbols QUERY', 'tree', 'serve', 'start PRESET', 'plan PRESET', 'wait ID', 'result ID', 'status', 'stop'],
+            result = {'commands': ['init', 'index', 'symbols QUERY', 'tree', 'serve', 'start PRESET', 'plan PRESET', 'wait ID', 'result ID', 'hooks plan|emit|join|status|profile', 'status', 'stop'],
                       'presets': sorted(config.get('presets', {}))}
         elif args.command == 'serve':
             configuration(root)

@@ -50,10 +50,14 @@ def run_directory(root, run_id):
 
 
 def start(root, preset, concurrency=3, attached=False):
-    from command_actors import validate_manifest
     from dispatch import prepare_preset
+    return start_prepared(root, prepare_preset(root, preset), preset, concurrency, attached)
+
+
+def start_prepared(root, manifest, preset, concurrency=3, attached=False, hook=False):
+    """Submit an already reviewed manifest through the existing worker."""
+    from command_actors import validate_manifest
     root = Path(root).resolve()
-    manifest = prepare_preset(root, preset)
     operations = {name: None for name in ('syntax', 'timing', 'index', 'symbols', 'tree')}
     validate_manifest(manifest, concurrency, root, operations)
     directories(root)
@@ -71,10 +75,14 @@ def start(root, preset, concurrency=3, attached=False):
     options = ({'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt'
                else {'start_new_session': True})
     try:
+        environment = os.environ.copy()
+        if hook:
+            environment['POW_HOOK_ACTIVE'] = '1'
         with (directory / 'runner.log').open('ab') as log:
             process = subprocess.Popen([sys.executable, '-B', '-S', str(Path(__file__).resolve()),
                                         str(root), run_id], cwd=root, stdin=subprocess.DEVNULL,
-                                       stdout=log, stderr=log, close_fds=True, **options)
+                                       stdout=log, stderr=log, close_fds=True,
+                                       env=environment, **options)
         atomic_json(directory / 'owner.json', {'pid': process.pid})
         _processes[process.pid] = process
         threading.Thread(target=process.wait, daemon=True).start()

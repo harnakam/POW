@@ -2,6 +2,8 @@
 
 Python 3.10以降の標準ライブラリだけで動く、コマンド実行器と読み取りワーカー。名前は `cxd`。LLM、APIキー、追加のPythonパッケージは不要。
 
+hookごとの同期・非同期、重複起動抑止、必須イベントでの合流と計測に基づく設定候補は[hookガイド](hooks.md)を参照。`cxd hooks plan|emit|join|status|profile`を使う。既存の`.codex-dispatch.json`で明示したhookだけを実行する。
+
 ## インストールせず試す
 
 POWリポジトリのルートで実行する。Linuxでは `python` を `python3` に読み替える。
