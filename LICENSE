@@ -1,21 +1,119 @@
-MIT License
+POW Source-Available License 1.0
+Effective date: 2026-10-30
 
-Copyright (c) 2026 harnakam
+Copyright (c) 2026 harnakam. All rights reserved except as granted below.
+Project: https://github.com/harnakam/POW
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Scope and acceptance
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This license applies to the POW code, Skills, prompts, and documentation
+that the copyright holder, harnakam (the "Licensor"), provides under this
+license (the "Software"). Exercising permissions granted by this license
+requires compliance with its conditions. It does not limit rights you have
+independently under applicable law, a platform's terms, a prior license, or
+a separate written agreement with the relevant copyright holder.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Third-party material identified under separate terms remains under those
+terms. This license grants only rights the Licensor is entitled to grant.
+
+2. Noncommercial permission
+
+Subject to sections 3 through 5, you may use, copy, modify, and redistribute
+the Software for noncommercial purposes. Noncommercial means not intended
+for commercial advantage or monetary compensation. No license fee is due
+for unmodified noncommercial use, but the promotion condition in section 3
+still applies. Making a modified version also requires the support payment
+in section 4.
+
+3. Required public promotion
+
+Before your first operational use or redistribution under this license,
+publish at least one publicly accessible acknowledgment that:
+
+  (a) names POW and harnakam;
+  (b) links to https://github.com/harnakam/POW; and
+  (c) briefly and truthfully states that you use, redistribute, or modify POW.
+
+You choose the medium, such as a public README, website, article, or social
+post. One published acknowledgment covers your continuing use and multiple
+versions; repeated promotional posts are not required.
+No positive review, star, rating, endorsement, account on a particular
+service, or disclosure of private project information is required.
+
+For example: "We use POW by harnakam: https://github.com/harnakam/POW".
+
+4. Required support payment for modifications
+
+If you make a modified version of the Software, you must make one monetary
+support payment to the Licensor before using or redistributing that
+modified version. You choose the amount: any positive amount accepted by
+the agreed payment method satisfies this condition. Zero does not.
+
+The payment is required once per derivative project you maintain, not for
+every edit, commit, release, installation, or copy. Subsequent revisions
+of that same derivative project do not require another support payment.
+Using an unchanged modified version received from someone else does not
+itself require a payment under this section; making your own modifications
+does. Retain your payment receipt or other acknowledgment privately.
+
+Modifications mean changes to the Software's code, Skill instructions,
+prompts, or documentation. Selecting or installing existing Skills, supplying
+ordinary runtime arguments or project configuration, and creating unrelated
+work with the Software do not by themselves count as modifications.
+
+Contact the Licensor through the project repository to arrange a receiving
+method. This license does not invent a payment address or authorize an
+agent or installer to send money for you. A support payment is not a
+commercial license and does not replace section 5.
+
+5. Paid commercial permission
+
+Commercial use requires a separate written commercial license from the
+Licensor and payment of the agreed license fee before that use begins.
+Commercial use includes use in a business's internal operations, paid client
+work, or a commercial product or service. Giving away a tool or service
+for free does not make its use noncommercial when it is intended to obtain
+commercial advantage.
+
+The fee, permitted scope, term, and any agreed exceptions to sections 3 or 4
+are set out in that separate agreement. Neither a public acknowledgment nor
+a support payment alone grants commercial permission. For inquiries, contact
+harnakam through https://github.com/harnakam/POW.
+
+6. Redistribution, notices, and independent output
+
+Every redistributed copy or substantial portion of the Software must retain
+this license, the copyright notices, and applicable third-party notices.
+Identify your modifications in the accompanying documentation and do not
+represent a modified version as an official POW release. You may not grant
+recipients broader rights to the Licensor's material than you hold.
+
+Ordinary output produced using the Software is not covered by this license
+merely because POW helped create it. If output incorporates the Software
+itself, such as copied Skill text or source code, the incorporated material
+remains subject to its applicable license. This output distinction does not
+remove the commercial-use requirement for using POW in commercial work.
+
+7. Previous releases and other rights
+
+Previously distributed MIT-licensed versions remain subject to the MIT
+permissions under which they were provided. This license does not revoke
+or restrict those prior grants. The historical MIT text is preserved in
+LICENSE-MIT-LEGACY; its presence is not a separate MIT grant for new material
+provided exclusively under this license. Copying unchanged material from a
+prior MIT release may still be permitted under that earlier grant.
+
+No trademark rights or right to imply the Licensor's endorsement are granted.
+No additional rights are implied. A breach ends the permissions granted by
+this license; the Licensor may restore them in writing after correction.
+
+8. No warranty or liability
+
+TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE SOFTWARE IS PROVIDED "AS IS",
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND. THE LICENSOR IS NOT LIABLE
+FOR CLAIMS, DAMAGES, OR OTHER LIABILITY ARISING FROM THE SOFTWARE OR ITS
+USE, WHETHER IN CONTRACT, TORT, OR OTHERWISE. Nothing in this section
+excludes liability that applicable law does not allow to be excluded.
+
+This is a custom source-available license, not the MIT License, the PolyForm
+Noncommercial License, or an OSI-approved open-source license.

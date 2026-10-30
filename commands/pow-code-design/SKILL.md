@@ -25,6 +25,10 @@ Identify:
 
 For new code, derive these from the requested use case and repository conventions. Do not fabricate existing files or consumers. If no extension is requested, keep the design direct and identify a possible extraction boundary without implementing speculative infrastructure.
 
+When an unfamiliar API or mechanism controls the design, inspect a relevant primary implementation before inventing a replacement. Extract its contract, constants, conditions, and failure behavior; keep its commit/version and file/symbol/line locators. Start with one source and expand only to resolve a named gap. Reuse local search or an available reference workflow without requiring a new search service. Adapt the mechanism rather than copying its directory tree or recreating every source-language API.
+
+Follow the public entry point to the decision, state change, and result. Distinguish an exposed working feature from a helper, metadata-only setting, unconnected route, or test-only path. Keep a small cited evidence brief for independent review; separate verified facts from design interpretations and revisit facts when the relevant source changes.
+
 ## Choose boundaries by responsibility
 
 Keep things together when they express one rule or change for the same reason. Separate them when they have distinct invariants, lifetimes, external effects, or independent variation. Directory structure and class count are consequences of these boundaries, not design goals.
@@ -70,11 +74,13 @@ Use a short dependency sketch or before/after example when it clarifies a bounda
 
 When implementation is requested, make the smallest coherent change through the real entry point. Reuse existing contracts and tooling; add no production dependency unless the design demonstrably needs it. Remove obsolete paths created by the change.
 
-Verify externally observable behavior and relevant invariants with repository-defined checks. Exercise the affected normal path and a meaningful failure or boundary case. For a refactor, establish behavior preservation; for a new variant, verify selection and behavior alongside an existing variant. Do not add tests that only mirror helper structure or enforce wording.
+Verify by compilation/build or direct execution of the affected behavior, using the project's existing commands. Choose the smallest command that establishes the requested result, with a finite timeout; if a build is needed to run, build once then run. Do not add or expand test code, fixtures, snapshots, benchmark suites, or verification harnesses unless explicitly requested. Do not routinely invoke a broad test suite. Review boundary behavior in the code rather than generating new test cases.
+
+Stop verification when the selected command succeeds. Rerun only after a relevant edit or to reproduce a specific newly observed failure; do not repeat an unchanged failure or broaden successful verification to seek more confidence. Fix observed causes within scope, preserve failure logs, and report a persistent blocker. Never remove existing tests or suppress required build failures. If only compilation is possible, report that limit without claiming the runtime behavior was exercised.
 
 Review the diff with two concrete challenges:
 
 1. **Reading challenge:** trace the representative request. Are the decision, state owner, and effects easy to find? Does indirection hide the rule the new design was meant to clarify?
-2. **Extension challenge:** walk through the confirmed variation. Does it stay within the proposed boundary, or does it require unrelated modules to know variant details? Use a reasoning walkthrough when enough; use an isolated executable case when correctness depends on substitutability. Do not ship fake providers or unused scaffolding as proof.
+2. **Extension challenge:** review the confirmed variation in the code. Does it stay within the proposed boundary, or does it require unrelated modules to know variant details? Use the real entry point when an execution is needed; do not generate extra test programs, fake providers, or unused scaffolding as proof.
 
 If the design fails either challenge, narrow or revise it before handoff. Report what changed, the key files, checks actually run, and any unresolved contract or verification gap. Distinguish a design walkthrough from executed behavioral evidence; validation of this Skill's format alone does not prove better generated code.

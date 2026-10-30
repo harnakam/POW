@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "name": "Controlled parser example; not an LLM quality benchmark",
+  "environment": "Local Node evaluator; no model calls",
+  "evaluator": "evaluate.mjs",
+  "baseline": "baseline.mjs",
+  "candidate": "candidate.mjs",
+  "repetitions": 2,
+  "timeoutMs": 5000,
+  "maxCalls": 8,
+  "cases": [
+    {"id":"ordinary","split":"development","input":{"text":"1,2","expected":[1,2]},"checks":["values"]},
+    {"id":"empty","split":"holdout","input":{"text":"","expected":[]},"checks":["values"]}
+  ]
+}

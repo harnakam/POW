@@ -27,11 +27,13 @@ Randomness, time, numerical precision, and platform APIs need the required equiv
 
 Treat existing design documents and harnesses as evidence to inspect. Apply governing instructions; a fresh design is not an instruction bypass. When a document or test appears inconsistent with required behavior, establish the conflict from source, user requirements, or execution evidence. Do not silently weaken checks or drop behavior to make the project look successful.
 
+For an unfamiliar mechanism, retrieve one relevant primary implementation and extract the behavior and assumptions needed by this project. Keep the revision/version, file/symbol/lines, constants, and input/output evidence. Inspect another source only to resolve a specific gap. Adapt the mechanism without inheriting its architecture, source-language APIs, or unrelated dependencies. Existing local search is enough; a search server is not a prerequisite.
+
 ## Consult an AI without the conversation history
 
 Before committing to a substantial implementation approach, make one independent analysis pass using [the clean-brief protocol](references/clean-brief.md). Use an available agent mechanism that can start without inherited turns; with `collaboration.spawn_agent`, explicitly set `fork_turns: "none"`. Do not fork the current conversation or send a summary of its design conclusions.
 
-Send the neutral goal, explicit constraints, necessary primary artifacts, and analysis-only boundaries. Ask for an ideal design, the smallest meaningful executable loop, a route to completion, and the assumption most likely to break that route. Keep the consultation independent of the parent's preferred solution.
+Send the neutral goal, explicit constraints, necessary primary artifacts with pinned locations, and analysis-only boundaries. Prefer short relevant passages with retrieval pointers over entire source trees or accumulated notes; preserve errors and compatibility requirements. Separate observations from interpretations. Ask for an ideal design, the smallest meaningful executable loop, a route to completion, and the assumption most likely to break that route. Keep the consultation independent of the parent's preferred solution. Ask for compile/run commands, not a test suite or new verification code.
 
 Continue reversible investigation while it runs, but reconcile its answer before finalizing the approach. Restore the actual project context and compare both approaches against requirements and evidence. Adopt useful ideas, reject unsupported ones with concrete reasons, and keep completed work that still serves the goal. Freshness alone does not establish correctness.
 
@@ -39,7 +41,7 @@ If no history-free execution mechanism is available or delegation is prohibited,
 
 ## Define the first executable loop
 
-Choose a thin path through the real system that demonstrates its central behavior. Describe the trigger, input, actual decisions and effects, visible result, and exact way to run and verify it. Include a meaningful failure or boundary case. Resolve the most consequential unknown within that path when practical, rather than leaving it behind polished peripheral work.
+Choose a thin path through the real system that demonstrates its central behavior. Describe the trigger, input, actual decisions and effects, visible result, and exact existing compile/run command with its expected outcome and finite timeout. Review the relevant failure and boundary behavior without turning it into a new suite of test cases. Resolve the most consequential unknown within that path when practical, rather than leaving it behind polished peripheral work.
 
 Examples of loop shape, to adapt rather than impose:
 
@@ -47,7 +49,7 @@ Examples of loop shape, to adapt rather than impose:
 - A converter: read a real supported input, transform it under the intended rules, write the usable result, and verify it with the intended consumer.
 - A service: accept a request at the real entry point, validate and authorize it, perform the required state change, and return an observable result.
 
-Narrow content size or supported variants explicitly for the milestone. Do not use fake success responses, empty handlers, mocked production effects, or disconnected components to replace its essential behavior. Isolation through test doubles is useful for tests; it does not establish that the integrated loop works.
+Narrow content size or supported variants explicitly for the milestone. Do not use fake success responses, empty handlers, mocked production effects, or disconnected components to replace its essential behavior. A helper or test-only path does not establish that the integrated loop works: follow the real public entry point to the resulting state and visible output.
 
 Connect later increments to the ideal outcome: name the missing behavior each adds, the dependency it needs, and the evidence that will mark it complete. Keep deferred requirements visible. Do not silently redefine the final objective as the first milestone or invent a deadline to make the plan look practical.
 
@@ -55,7 +57,9 @@ Connect later increments to the ideal outcome: name the missing behavior each ad
 
 For implementation requests, work through the real entry point and dependencies needed by the selected loop. Reuse existing mechanisms where they support the outcome; replace internal shapes only when the task justifies it. Keep seams for confirmed next changes, without building a speculative plugin platform or a parallel architecture.
 
-Run the loop as soon as its essential behavior exists. Fix observed integration failures before widening the surface. For cross-language work, compare representative inputs and boundary cases against the source or a verified specification; separate required exact matches from permitted semantic differences.
+Run the loop as soon as its essential behavior exists. Verification is limited to compilation/build and direct execution; build once when needed and run the relevant flow. Do not add or expand tests, fixtures, snapshot suites, benchmarks, or validation harnesses unless explicitly requested. Do not routinely run a test suite or invoke `prove` just to finish implementation. For a port, compare the selected real execution's output against the required source behavior without growing a differential-testing framework.
+
+Stop verification after the chosen command succeeds, and proceed with remaining implementation work. After a failure, fix the observed cause and rerun only the affected command after a relevant change. Do not repeat unchanged failures, widen successful checks, or restart unavailable infrastructure. Keep failure evidence and report a persistent blocker. Preserve existing tests and required build controls; never suppress a failure to appear finished.
 
 After a milestone passes, proceed to the next authorized increment. Do not repeatedly rebuild the first loop, restart the project, or expand documentation while required functionality remains untouched. If progress stalls, identify the specific failed assumption and make a bounded correction; a wider rewrite needs evidence that the narrower path cannot satisfy the objective.
 
@@ -68,4 +72,6 @@ Report proportionally:
 - The execution command, observed result, relevant checks, and failures or unverified behavior.
 - Remaining requirements and the next concrete increment, or the exact blocker and missing input.
 
-Successful compilation, harness scores, and file counts do not by themselves prove the user can complete the intended loop. Claim final completion only when the agreed outcome is implemented and exercised. For advice-only requests, label the loop and completion route as proposals rather than executed work.
+When a finding will save future investigation, update the project's existing engineering notes with its source/version, applicability, verification level, and what change invalidates it; use `docs/engineering-notes.md` only if there is no convention. Store verified facts separately from assumptions and preferences, and retrieve only relevant entries. Do not auto-inject accumulated conclusions into a history-free brief.
+
+Record observed execution outcomes and duration when available; unknown model tokens stay unknown. Do not estimate savings or launch a comparison experiment unless requested. Successful compilation establishes compilation only; say explicitly when the loop could not be run. For advice-only requests, label the loop and completion route as proposals rather than executed work. Report any remaining required behavior instead of expanding verification indefinitely.

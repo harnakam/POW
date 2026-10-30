@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import {
   chmod,
   copyFile,
+  lstat,
   mkdir,
   readFile,
   readdir,
@@ -114,6 +115,21 @@ async function collectFileHashes(root, relative = "") {
 
 async function validateCommands(repoRoot) {
   const commandsRoot = path.join(repoRoot, "commands");
+  const sharedFiles = {};
+  for (const name of ["LICENSE", "LICENSE-MIT-LEGACY"]) {
+    const source = path.join(repoRoot, name);
+    let sourceStat;
+    try {
+      sourceStat = await lstat(source);
+    } catch (error) {
+      if (error.code === "ENOENT") continue;
+      throw error;
+    }
+    if (!sourceStat.isFile()) {
+      throw new PowError(`Shared license must be a regular file: ${name}`);
+    }
+    sharedFiles[name] = { source, hash: await hashFile(source) };
+  }
   let entries;
   try {
     entries = await readdir(commandsRoot, { withFileTypes: true });
@@ -146,7 +162,16 @@ async function validateCommands(repoRoot) {
     }
     parseFrontmatter(skill, entry.name);
     const files = await collectFileHashes(commandRoot);
-    commands.push({ name: entry.name, root: commandRoot, files });
+    const inheritedFiles = {};
+    for (const [name, shared] of Object.entries(sharedFiles)) {
+      if (Object.hasOwn(files, name)) continue;
+      if (await pathExists(path.join(commandRoot, name))) {
+        throw new PowError(`${entry.name}/${name} must be a regular file.`);
+      }
+      files[name] = shared.hash;
+      inheritedFiles[name] = shared.source;
+    }
+    commands.push({ name: entry.name, root: commandRoot, files, inheritedFiles });
   }
 
   if (commands.length === 0) {
@@ -245,7 +270,7 @@ async function copyCommand(source, destination) {
   await mkdir(destination, { recursive: true });
   for (const relative of Object.keys(source.files)) {
     const platformRelative = relative.split("/").join(path.sep);
-    const sourceFile = path.join(source.root, platformRelative);
+    const sourceFile = source.inheritedFiles[relative] ?? path.join(source.root, platformRelative);
     const destinationFile = path.join(destination, platformRelative);
     await mkdir(path.dirname(destinationFile), { recursive: true });
     await copyFile(sourceFile, destinationFile);

@@ -15,6 +15,8 @@ Move directly from a sufficiently clear request to execution. Optimize for elaps
 4. Implement the complete requested outcome, then verify it in proportion to risk.
 5. Report the result, evidence, and any genuinely unfinished item.
 
+Verify with the smallest existing compilation/build or direct execution command, a finite timeout, and an expected observable result. Do not add or expand tests, fixtures, snapshots, benchmarks, or validation harnesses unless explicitly requested, and do not routinely run a broad test suite. Stop verification on success; rerun only after a relevant change or concrete new failure. Preserve existing tests and required build controls, and report compile-only coverage or persistent failures honestly.
+
 ## Skip
 
 - A separate planning phase
