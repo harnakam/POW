@@ -23,17 +23,40 @@ def fingerprint(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
 
 
-def definitions(root):
-    config = configuration(root)
+def input_tree(root, roots):
+    if not isinstance(roots, list) or len(roots) > 8 or any(not isinstance(item, str) or Path(item).is_absolute() for item in roots):
+        raise ValueError('inputRoots must list at most 8 workspace-relative directories')
+    skipped = {'.git', '.cxd', '.pow', 'node_modules', '__pycache__', '.venv', 'dist', 'build', 'coverage'}
+    files, total = {}, 0
+    for relative in roots:
+        folder = inside(root, relative)
+        if not folder.is_dir():
+            raise ValueError('inputRoots must be existing directories')
+        for current, directories, names in os.walk(folder, followlinks=False):
+            directories[:] = sorted(name for name in directories if name not in skipped and not Path(current, name).is_symlink())
+            for name in sorted(names):
+                file = Path(current, name)
+                if file.is_symlink() or not file.is_file():
+                    raise ValueError('inputRoots cannot contain symlink or special files')
+                size = file.stat().st_size
+                total += size
+                if size > 2 * 1024 * 1024 or len(files) >= 2000 or total > 32 * 1024 * 1024:
+                    raise ValueError('inputRoots scan limit reached; narrow the declared scope')
+                files[str(file.relative_to(root))] = hashlib.sha256(file.read_bytes()).hexdigest()
+    return files
+
+
+def definitions(root, config_override=None):
+    config = configuration(root, config_override)
     limit = config.get('hooksConcurrency', 2)
     if type(limit) is not int or not 1 <= limit <= 8:
         raise ValueError('hooksConcurrency must be 1..8')
     entries = config.get('hooks', [])
     if not isinstance(entries, list) or len(entries) > 32:
         raise ValueError('hooks must be a list of at most 32 entries')
-    hooks, names = [], set()
+    hooks, names, trees = [], set(), {}
     for raw in entries:
-        if not isinstance(raw, dict) or set(raw) - {'id', 'event', 'preset', 'mode', 'onFailure', 'requiredAt', 'independent', 'inputs'}:
+        if not isinstance(raw, dict) or set(raw) - {'id', 'event', 'preset', 'mode', 'onFailure', 'requiredAt', 'independent', 'inputs', 'inputRoots'}:
             raise ValueError('unsupported hook fields')
         hook = dict(raw)
         for key in ('id', 'event', 'preset'):
@@ -47,6 +70,7 @@ def definitions(root):
         hook.setdefault('requiredAt', [])
         hook.setdefault('independent', False)
         hook.setdefault('inputs', [])
+        hook.setdefault('inputRoots', [])
         if hook['mode'] not in {'sync', 'async'} or hook['onFailure'] not in {'block', 'record'} or type(hook['independent']) is not bool:
             raise ValueError('invalid hook mode/onFailure/independent')
         events = hook['requiredAt']
@@ -67,15 +91,25 @@ def definitions(root):
             if not file.is_file() or file.stat().st_size > 8 * 1024 * 1024:
                 raise ValueError('hook input must be an existing file <=8 MiB')
             inputs[relative] = hashlib.sha256(file.read_bytes()).hexdigest()
-        manifest = prepare_preset(root, hook['preset'])
+        tree_key = json.dumps(hook['inputRoots'], sort_keys=True)
+        if tree_key not in trees:
+            trees[tree_key] = input_tree(root, hook['inputRoots'])
+        manifest = prepare_preset(root, hook['preset'], config_override=config)
         if len(manifest['jobs']) > 32:
             raise ValueError('hook preset is limited to 32 jobs')
         # Hooks run commands only; read-only resident operations have different lifetimes.
         jobs = validate_manifest(manifest, limit, root)
         if any(job['timeout_s'] > 300 for job in jobs.values()):
             raise ValueError('hook jobs require timeout_s <=300')
+        entrypoints = {}
+        for job in manifest['jobs']:
+            for arg in job.get('argv', []):
+                candidate = Path(job['cwd']) / arg
+                if candidate.suffix.lower() in {'.py', '.js', '.mjs', '.cjs', '.sh', '.ps1'} and candidate.is_file() and candidate.stat().st_size <= 2 * 1024 * 1024:
+                    entrypoints[str(candidate)] = hashlib.sha256(candidate.read_bytes()).hexdigest()
         hooks.append({**hook, 'manifest': manifest,
-                      'fingerprint': fingerprint({'hook': hook, 'manifest': manifest, 'inputs': inputs})})
+                      'profileKey': fingerprint({'hook': hook, 'manifest': manifest, 'entrypoints': entrypoints, 'platform': sys.platform, 'python': sys.version}),
+                      'fingerprint': fingerprint({'hook': hook, 'manifest': manifest, 'inputs': inputs, 'tree': trees[tree_key]})})
     return hooks, limit
 
 
@@ -164,10 +198,11 @@ def join(root, state, hooks, event, cycle, deadline):
 def report(state, hooks):
     proposals = []
     for hook in hooks:
-        samples = [run for run in state['runs'] if run['hook'] == hook['id'] and run['fingerprint'] == hook['fingerprint']
+        samples = [run for run in state['runs'] if run['hook'] == hook['id'] and run.get('profileKey', run['fingerprint']) == hook.get('profileKey', hook['fingerprint'])
                    and run['status'] != 'running']
         durations = sorted(run['elapsed_s'] for run in samples if isinstance(run.get('elapsed_s'), (int, float)))
         item = {'hook': hook['id'], 'samples': len(samples), 'failures': sum(run['status'] != 'completed' for run in samples),
+                'inputVariants': len({run['fingerprint'] for run in samples}),
                 'deduplicated': sum(run.get('deduplicated', 0) for run in samples), 'proposals': []}
         if durations:
             item.update(p50_s=statistics.median(durations), p95_s=durations[max(0, math.ceil(len(durations) * .95) - 1)],
@@ -192,7 +227,7 @@ def report(state, hooks):
             item['proposals'].append('Timeout candidates use twice the observed job maximum plus one second; review representative load and failure behavior before applying.')
         proposals.append(item)
     return {'hooks': proposals, 'automaticChanges': False,
-            'scope': 'Current hook/input fingerprint only. Elapsed worker time and caller wait are different boundaries; no estimated speedup.'}
+            'scope': 'Same hook/config/entrypoint/platform cohort; input variants are counted. Different inputs can have different costs. No cached verification or estimated speedup.'}
 
 
 def main(argv=None):
@@ -202,6 +237,7 @@ def main(argv=None):
     parser.add_argument('--workspace', type=Path, default=Path.cwd())
     parser.add_argument('--cycle')
     parser.add_argument('--timeout', type=float, default=60)
+    parser.add_argument('--resume', action='store_true', help='Reuse recorded results only within this same cycle/input identity')
     args = parser.parse_args(argv)
     try:
         root = args.workspace.resolve()
@@ -252,6 +288,15 @@ def main(argv=None):
                         continue
                     active = live(root, state)
                     same = [run for run in active if run['hook'] == hook['id']]
+                    previous = [run for run in state['runs'] if run['hook'] == hook['id'] and run['cycle'] == args.cycle
+                                and run['fingerprint'] == hook['fingerprint']]
+                    if args.resume and previous and previous[-1]['status'] != 'running':
+                        run = previous[-1]
+                        failure = run['onFailure'] == 'block' and run['status'] != 'completed'
+                        outcomes.append({**public(run), 'blocking': failure})
+                        if failure:
+                            blocked = True; break
+                        continue
                     if same and (same[0]['cycle'] != args.cycle or same[0]['fingerprint'] != hook['fingerprint']):
                         outcomes.append({'hook': hook['id'], 'status': 'busy-other-input-or-cycle', 'blocking': True}); blocked = True; break
                     if same:
@@ -261,7 +306,7 @@ def main(argv=None):
                         if len(active) >= limit or any(conflict(hook['manifest'], run['manifest']) for run in active):
                             outcomes.append({'hook': hook['id'], 'status': 'busy-resource-or-capacity', 'blocking': True}); blocked = True; break
                         submitted = start_prepared(root, hook['manifest'], 'hook:' + hook['id'], 1, hook=True)
-                        run = {key: hook[key] for key in ('fingerprint', 'manifest', 'mode', 'onFailure', 'requiredAt')}
+                        run = {key: hook[key] for key in ('fingerprint', 'profileKey', 'manifest', 'mode', 'onFailure', 'requiredAt')}
                         run.update(hook=hook['id'], cycle=args.cycle, run_id=submitted['run_id'], status='running', submitted_unix_s=time.time())
                         state['runs'].append(run)
                         atomic_json(file, state)

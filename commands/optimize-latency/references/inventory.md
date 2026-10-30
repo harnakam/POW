@@ -8,6 +8,8 @@
 | `scripts/cxd/command_actors.py` | bounded DAG、依存順、失敗伝播、実行ログ、critical-path/FIFO、論理read/write排他 | コマンドは通常の隔離プロセス |
 | `scripts/cxd/async_jobs.py` | 実行ごとのsnapshotと非同期runner、状態・終了コード取得 | Codexではattached session保持 |
 | `scripts/cxd/hooks.py` | hookごとのsync/async、合流、重複抑止、鮮度・競合確認、時間と設定候補 | 明示したhooks、cycle ID。外部イベントの自動登録はしない |
+| `scripts/cxd/native_hooks.py` | Codexイベントを承認したprojectへ接続し、入力世代・Stop合流・継続上限と日々の設定調整を扱う | 明示登録・native trust・project authorization |
+| `scripts/install_codex_hooks.py` / `scripts/trust_codex_hooks.py` | 既存hookを保持して所有groupを配置し、Codexの実hashと標準APIでレビュー・信頼登録 | 明示実行のみ。設定のbytesをbackup |
 | `scripts/cxd/ctx.py` | `ctx PRESET`非同期、`ctx -wait PRESET`同期 | cxdと同じ設定・権限 |
 | `scripts/cxd/resident.py` / `resident_rpc.py` | 内容hashで無効化するPython AST索引、限定読み取りworker、OS通知 | Windows / Linux local filesystem |
 | `scripts/cxd/bridge.js` | functions.execからattached runnerを開始しruntime内で完了待機・通知 | 実在するtools adapter、cxd shim |

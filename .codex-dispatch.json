@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "source_roots": ["commands", "scripts"],
+  "hooksConcurrency": 2,
+  "codexHooks": {
+    "enabled": true,
+    "waitSeconds": 30,
+    "maxStopContinuations": 1,
+    "verifyReadOnlyTurns": false,
+    "profileOnStop": true
+  },
+  "presets": {
+    "refresh-workflow": {
+      "jobs": [
+        {"id":"discover","argv":["node","commands/update/scripts/update.mjs","scan","--root",".","--write"],"timeout_s":20,"reads":["source"],"writes":["workflow-state"]}
+      ]
+    },
+    "verify-skills": {
+      "jobs": [
+        {"id":"skills","argv":["node","scripts/pow.mjs","validate"],"timeout_s":15,"reads":["source"]},
+        {"id":"node-syntax","argv":["node","--check","scripts/pow.mjs"],"timeout_s":10,"reads":["source"]},
+        {"id":"python-syntax","argv":["{python}","-B","-c","import ast,pathlib; base=pathlib.Path('commands/optimize-latency/scripts'); files=list(base.glob('*.py'))+list((base/'cxd').glob('*.py')); [ast.parse(p.read_text(encoding='utf-8-sig'),filename=str(p)) for p in files]; print(f'Parsed {len(files)} Python files')"],"timeout_s":10,"reads":["source"]}
+      ]
+    }
+  },
+  "hooks": [
+    {"id":"workflow-knowledge","event":"afterChange","preset":"refresh-workflow","mode":"async","onFailure":"block","requiredAt":["beforeComplete"],"independent":true,"inputRoots":["commands","scripts"]},
+    {"id":"completion-compile","event":"beforeComplete","preset":"verify-skills","mode":"sync","onFailure":"block","inputRoots":["commands","scripts"]}
+  ]
+}

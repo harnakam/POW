@@ -67,6 +67,8 @@ POW installs commands into `${CODEX_HOME:-~/.codex}/skills` and records SHA-256 
 
 ## Executable engineering commands
 
+For automatic Codex lifecycle hooks, use the [explicit native integration](commands/optimize-latency/references/native-hooks.md). It preserves existing handlers, registers reviewed trust, and supports per-hook sync/async settings and measured tuning. Ordinary Skill installation does not change global hook settings.
+
 Invoke `$update`, `$compressor`, `$hatarake`, or `$design-reasoning` in Codex after installation. Each Skill bundles its own standalone Node runtime and works without the other three. The clone also provides literal slash dispatch:
 
 ```sh

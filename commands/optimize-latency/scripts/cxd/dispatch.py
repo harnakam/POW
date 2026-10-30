@@ -14,8 +14,8 @@ from resident_rpc import directories, request, serve, state_info
 BUILTINS = {'init', 'aliases', 'serve', 'start', 'status', 'stop', 'index', 'symbols', 'tree', 'plan', 'wait', 'result', 'hooks'}
 
 
-def configuration(root):
-    config = json.loads((root / '.codex-dispatch.json').read_text(encoding='utf-8-sig'))
+def configuration(root, value=None):
+    config = json.loads((root / '.codex-dispatch.json').read_text(encoding='utf-8-sig')) if value is None else value
     if (not isinstance(config, dict) or type(config.get('version')) is not int or config['version'] != 1
             or not isinstance(config.get('source_roots'), list) or not config['source_roots']):
         raise ValueError('unsupported .codex-dispatch.json schema')
@@ -34,9 +34,9 @@ def configuration(root):
     return config
 
 
-def prepare_preset(root, name, extra_jobs=()):
+def prepare_preset(root, name, extra_jobs=(), *, config_override=None):
     root = Path(root).resolve()
-    config = configuration(root)
+    config = configuration(root, config_override)
     preset = config.get('presets', {}).get(name)
     if not isinstance(preset, dict):
         raise ValueError(f'unknown preset {name}; use cxd aliases')
@@ -83,6 +83,9 @@ def main(argv=None):
     prefix.add_argument('command', nargs='?')
     leading, remaining = prefix.parse_known_args(arguments)
     if leading.command == 'hooks':
+        if remaining and remaining[0] == 'native':
+            from native_hooks import main as native_main
+            return native_main(remaining[1:] + (['--workspace', str(leading.workspace)] if leading.workspace else []))
         from hooks import main as hook_main
         return hook_main(remaining + (['--workspace', str(leading.workspace)] if leading.workspace else []))
     parser = argparse.ArgumentParser(description=__doc__)

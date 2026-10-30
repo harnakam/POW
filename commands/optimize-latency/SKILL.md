@@ -18,7 +18,7 @@ Reduce the measured cost of a task while preserving its requested behavior, veri
 
 ## Routing
 
-- For per-hook sync/async scheduling, read [the hook guide](references/hooks.md). Reuse `cxd hooks plan|emit|join|status|profile`; configure explicit merge points and preserve failures. Separate observed execution and wait boundaries. Installation does not register native hooks or automatically change scheduling.
+- For per-hook sync/async scheduling, read [the hook guide](references/hooks.md). Reuse `cxd hooks plan|emit|join|status|profile`; preserve failures and separate execution from wait time. When explicitly asked for automatic Codex hooks, follow [the native integration](references/native-hooks.md): review/install owned handlers, register exact native trust through the supported API, authorize the project, and verify actual dispatch. Ordinary Skill installation does not perform these global changes. Use `hooks native profile|configure` for daily measured tuning; do not repeat verification to manufacture samples.
 - Read [the file and installation inventory](references/inventory.md) for required Python/Node entry points, Skills, external tools, and excluded private artifacts.
 - Read [the operating policy](references/operating-policy.md) for the global AGENTS.md blocks used in this investigation; installation does not silently edit global instructions.
 

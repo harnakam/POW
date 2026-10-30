@@ -4,6 +4,8 @@ Python 3.10以降の標準ライブラリだけで動く、コマンド実行器
 
 hookごとの同期・非同期、重複起動抑止、必須イベントでの合流と計測に基づく設定候補は[hookガイド](hooks.md)を参照。`cxd hooks plan|emit|join|status|profile`を使う。既存の`.codex-dispatch.json`で明示したhookだけを実行する。
 
+Codex自身のイベントから自動発火させる場合は[native統合](native-hooks.md)を明示的に登録する。`hooks native configure`で有効な設定候補を確認し、`--apply`で日々の同期・非同期とtimeoutを調整できる。
+
 ## インストールせず試す
 
 POWリポジトリのルートで実行する。Linuxでは `python` を `python3` に読み替える。

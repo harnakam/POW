@@ -13,7 +13,7 @@ Use `$<name>` in Codex. In a clone, `node scripts/pow.mjs /<name> ...` dispatche
 
 All state should remain private and ignored. Reports can contain paths, command arguments, source observations, task text or screenshots. These are local trusted-workspace tools, not security sandboxes against adversarial concurrent filesystem manipulation. Review inputs and use disposable authorized data for browser actions. No automatic payment, promotion or commercial agreement is performed.
 
-Optional [per-hook scheduling](../commands/optimize-latency/references/hooks.md) reuses cxd with `node scripts/pow.mjs /hooks ...`: configure sync/async per hook, explicit required join events, failures, resource claims and input freshness. `profile` reports observed time and reviewed configuration candidates. Hosts must explicitly emit events; installation does not register native hooks.
+Optional [per-hook scheduling](../commands/optimize-latency/references/hooks.md) reuses cxd with `node scripts/pow.mjs /hooks ...`. Explicit [native integration](../commands/optimize-latency/references/native-hooks.md) registers Codex lifecycle handlers and authorizes exact project settings. Actual edits launch configured work, Stop joins required results, and read-only turns avoid new verification by default. `hooks native profile|configure` exposes measurements and validated tuning; ordinary Skill installation does not register global hooks. POW includes its own reviewed `.codex-dispatch.json` for workflow discovery and compile/Skill validation without new tests.
 
 ## Design decisions from research
 

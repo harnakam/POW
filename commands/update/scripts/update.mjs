@@ -8,7 +8,7 @@ import path from 'node:path';
 const VERSION = 1;
 const LIMIT = { files: 2000, fileBytes: 1048576, totalBytes: 33554432, output: 1048576, workflows: 50, sequences: 20, steps: 20, outcomes: 50, history: 50 };
 const TTL = 7 * 86400000;
-const EXCLUDE = new Set(['.git', '.pow', 'node_modules', 'dist', 'build', 'coverage', '.next', '.venv', '__pycache__']);
+const EXCLUDE = new Set(['.git', '.pow', '.cxd', 'node_modules', 'dist', 'build', 'coverage', '.next', '.venv', '__pycache__']);
 const digest = value => createHash('sha256').update(typeof value === 'string' || Buffer.isBuffer(value) ? value : JSON.stringify(value)).digest('hex');
 const now = () => new Date().toISOString();
 const secretPath = value => /(^|\/)(\.env(?:\..*)?|credentials(?:\..*)?|id_rsa|id_ed25519|.*\.(?:pem|key|p12))$/i.test(value);
