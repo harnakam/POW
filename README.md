@@ -1,5 +1,7 @@
 # POW
 
+> **License:** noncommercial use and modifications are free with **prominent public promotion** in your main README or primary public introduction. **Commercial use requires a paid agreement.** Optional support: [GitHub Sponsors](https://github.com/sponsors/harnakam). See [LICENSE](LICENSE) and the [Japanese guide](LICENSING.md).
+
 POW is a small, growing collection of extra commands for Codex. Each command is packaged as an [Agent Skill](https://developers.openai.com/codex/skills), so Codex can invoke it explicitly or select it when the request matches.
 
 ## Requirements
@@ -134,13 +136,14 @@ The existing test suite remains available through `npm test` for an explicitly r
 
 ## License
 
-[POW Source-Available License 1.0](LICENSE). This is a custom source-available license with the following conditions:
+[POW Source-Available License 1.1](LICENSE). This is a custom source-available license with the following conditions:
 
 - **Commercial use:** obtain a separate written commercial license from harnakam and pay the agreed fee before use. Internal business use and paid client work are included.
-- **Public promotion is required:** before operational use or redistribution, publish a truthful acknowledgment naming POW and harnakam with a link to this repository. Choose your own public README, website, article, or social post. One acknowledgment covers continuing use; repeated posts, a positive review, or a star are not required.
-- **Modifications require a support payment:** before using or redistributing your modified version, pay any positive amount of your choice once per derivative project. Further edits or releases of that same project do not require repeated payments. Ordinary configuration and unrelated generated output are not modifications of POW.
-- **Notices:** retain the license and applicable copyright notices when redistributing. A support payment does not buy commercial permission.
+- **Prominent public promotion is required:** before operational use or redistribution, name POW and harnakam, link to this repository, and truthfully describe your use. Put the acknowledgment at the beginning of the main public README or in the primary introductory area of your main website or product page. Keep it prominent and publicly accessible while use continues; a footer, buried notice, collapsed section, or incidental social post alone is insufficient. Private work can use a public personal website or profile introduction without disclosing project details.
+- **Modifications require no donation:** noncommercial modifications are free under the promotion and notice conditions. Ordinary configuration and unrelated generated output do not become POW derivatives merely through use.
+- **Optional support:** contribute through [GitHub Sponsors](https://github.com/sponsors/harnakam) if you wish. Sponsorship does not buy commercial permission or replace promotion.
+- **Notices:** retain the license and applicable copyright notices when redistributing, and identify your modifications.
 
-Contact [harnakam through the project repository](https://github.com/harnakam/POW) to arrange commercial terms or a support-payment method. No payment service or automatic collection is bundled. See the [Japanese licensing guide](LICENSING.md) for examples.
+Contact [harnakam through the project repository](https://github.com/harnakam/POW) to arrange commercial terms. No automatic collection is bundled. See the [Japanese licensing guide](LICENSING.md) for examples.
 
 Previous MIT releases retain their existing permissions; the change does not charge retroactively for those copies. [LICENSE-MIT-LEGACY](LICENSE-MIT-LEGACY) preserves the historical text and does not license new material under MIT. Separately licensed third-party material keeps its original terms. The [full LICENSE](LICENSE) governs this version.

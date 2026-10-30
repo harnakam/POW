@@ -1,4 +1,4 @@
-POW Source-Available License 1.0
+POW Source-Available License 1.1
 Effective date: 2026-10-30
 
 Copyright (c) 2026 harnakam. All rights reserved except as granted below.
@@ -20,12 +20,11 @@ terms. This license grants only rights the Licensor is entitled to grant.
 
 Subject to sections 3 through 5, you may use, copy, modify, and redistribute
 the Software for noncommercial purposes. Noncommercial means not intended
-for commercial advantage or monetary compensation. No license fee is due
-for unmodified noncommercial use, but the promotion condition in section 3
-still applies. Making a modified version also requires the support payment
-in section 4.
+for commercial advantage or monetary compensation. No license fee or
+support payment is required for noncommercial use, modification, or
+redistribution. The prominent promotion condition in section 3 still applies.
 
-3. Required public promotion
+3. Required prominent public promotion
 
 Before your first operational use or redistribution under this license,
 publish at least one publicly accessible acknowledgment that:
@@ -34,37 +33,36 @@ publish at least one publicly accessible acknowledgment that:
   (b) links to https://github.com/harnakam/POW; and
   (c) briefly and truthfully states that you use, redistribute, or modify POW.
 
-You choose the medium, such as a public README, website, article, or social
-post. One published acknowledgment covers your continuing use and multiple
-versions; repeated promotional posts are not required.
+Place this acknowledgment in the most prominent relevant public location:
+the primary public introduction to your project, modified version, or use
+of POW. Put it at the beginning of the main README, before installation or
+usage instructions, or in the primary introductory area of the main website
+or product page, visible without opening a separate credits or legal page.
+Do not satisfy this condition solely with a footer, buried license notice,
+collapsed section, or incidental social post.
+
+For private work without a public project page, use a public introduction
+that you control, such as the beginning of a personal website or a public
+profile introduction. You need not identify or disclose the private work.
+One such acknowledgment can cover continuing use and multiple versions;
+keep it publicly accessible and prominently placed while that use or
+redistribution continues. Repeated promotional posts are not required.
 No positive review, star, rating, endorsement, account on a particular
 service, or disclosure of private project information is required.
 
 For example: "We use POW by harnakam: https://github.com/harnakam/POW".
 
-4. Required support payment for modifications
+4. Voluntary support through GitHub Sponsors
 
-If you make a modified version of the Software, you must make one monetary
-support payment to the Licensor before using or redistributing that
-modified version. You choose the amount: any positive amount accepted by
-the agreed payment method satisfies this condition. Zero does not.
+Support is welcome through https://github.com/sponsors/harnakam.
+Sponsorship is entirely voluntary, including when you modify the Software.
+You choose whether to contribute, the amount, and the frequency from the
+options available on GitHub Sponsors. Not sponsoring does not limit the
+permissions granted by this license.
 
-The payment is required once per derivative project you maintain, not for
-every edit, commit, release, installation, or copy. Subsequent revisions
-of that same derivative project do not require another support payment.
-Using an unchanged modified version received from someone else does not
-itself require a payment under this section; making your own modifications
-does. Retain your payment receipt or other acknowledgment privately.
-
-Modifications mean changes to the Software's code, Skill instructions,
-prompts, or documentation. Selecting or installing existing Skills, supplying
-ordinary runtime arguments or project configuration, and creating unrelated
-work with the Software do not by themselves count as modifications.
-
-Contact the Licensor through the project repository to arrange a receiving
-method. This license does not invent a payment address or authorize an
-agent or installer to send money for you. A support payment is not a
-commercial license and does not replace section 5.
+Sponsorship does not replace the promotion requirement in section 3 or
+grant commercial permission under section 5. This license does not
+authorize an agent or installer to send money for you.
 
 5. Paid commercial permission
 
@@ -75,9 +73,9 @@ work, or a commercial product or service. Giving away a tool or service
 for free does not make its use noncommercial when it is intended to obtain
 commercial advantage.
 
-The fee, permitted scope, term, and any agreed exceptions to sections 3 or 4
+The fee, permitted scope, term, and any agreed exceptions to section 3
 are set out in that separate agreement. Neither a public acknowledgment nor
-a support payment alone grants commercial permission. For inquiries, contact
+a sponsorship alone grants commercial permission. For inquiries, contact
 harnakam through https://github.com/harnakam/POW.
 
 6. Redistribution, notices, and independent output
