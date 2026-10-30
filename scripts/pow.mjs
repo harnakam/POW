@@ -90,7 +90,7 @@ async function hashFile(filePath) {
   return createHash("sha256").update(content).digest("hex");
 }
 
-async function collectFileHashes(root, relative = "") {
+async function collectFileHashes(root, relative = "", excludePythonCache = false) {
   const current = path.join(root, relative);
   const entries = await readdir(current, { withFileTypes: true });
   const files = {};
@@ -100,8 +100,12 @@ async function collectFileHashes(root, relative = "") {
     if (entry.isSymbolicLink()) {
       throw new PowError(`Symbolic links are not allowed in commands: ${childRelative}`);
     }
+    if (excludePythonCache && (
+      (entry.isDirectory() && entry.name === "__pycache__") ||
+      (entry.isFile() && /\.py[co]$/i.test(entry.name))
+    )) continue;
     if (entry.isDirectory()) {
-      Object.assign(files, await collectFileHashes(root, childRelative));
+      Object.assign(files, await collectFileHashes(root, childRelative, excludePythonCache));
       continue;
     }
     if (!entry.isFile()) {
@@ -161,7 +165,7 @@ async function validateCommands(repoRoot) {
       throw error;
     }
     parseFrontmatter(skill, entry.name);
-    const files = await collectFileHashes(commandRoot);
+    const files = await collectFileHashes(commandRoot, "", true);
     const inheritedFiles = {};
     for (const [name, shared] of Object.entries(sharedFiles)) {
       if (Object.hasOwn(files, name)) continue;
@@ -286,8 +290,12 @@ async function writeManifest(manifestPath, manifest) {
   await rename(temporary, manifestPath);
 }
 
-async function synchronize(mode, context, force) {
-  const commands = await validateCommands(context.repoRoot);
+async function synchronize(mode, context, force, name) {
+  let commands = await validateCommands(context.repoRoot);
+  if (name !== undefined) {
+    commands = commands.filter((command) => command.name === name);
+    if (commands.length === 0) throw new PowError(`Unknown command name: ${name}`);
+  }
   const manifest = (await loadManifest(context.manifestPath)) ?? emptyManifest();
   const actions = [];
 
@@ -389,7 +397,7 @@ async function listInstalled(context) {
 
 function usage() {
   return [
-    "Usage: node scripts/pow.mjs <command> [--force]",
+    "Usage: node scripts/pow.mjs <command> [--force] [--name NAME]",
     "",
     "Commands:",
     "  install     Install missing POW commands",
@@ -397,6 +405,8 @@ function usage() {
     "  uninstall   Remove unchanged POW-owned commands",
     "  list        Show installed command status",
     "  validate    Validate repository commands",
+    "",
+    "--name NAME limits install or update to one repository command.",
   ].join("\n");
 }
 
@@ -417,17 +427,36 @@ export async function run(args, options = {}) {
     skillsRoot: path.join(codexHome, "skills"),
     manifestPath: path.join(codexHome, ".pow", "manifest.json"),
   };
-  const force = args.includes("--force");
-  const positional = args.filter((argument) => argument !== "--force");
-  const command = positional[0];
-
   try {
+    let force = false;
+    let name;
+    const positional = [];
+    for (let index = 0; index < args.length; index += 1) {
+      const argument = args[index];
+      if (argument === "--force") {
+        if (force) throw new PowError("--force may be specified only once.");
+        force = true;
+      } else if (argument === "--name") {
+        if (name !== undefined) throw new PowError("--name may be specified only once.");
+        name = args[++index];
+        if (!name || name.startsWith("-")) throw new PowError("--name requires a command name.");
+        assertCommandName(name);
+      } else if (argument.startsWith("-") && argument !== "--help") {
+        throw new PowError(`Unknown option: ${argument}`);
+      } else {
+        positional.push(argument);
+      }
+    }
+    const command = positional[0];
     if (positional.length !== 1 || !command || command === "help" || command === "--help") {
       io.stdout(usage());
       return command === "help" || command === "--help" ? 0 : 1;
     }
     if (force && command !== "update") {
       throw new PowError("--force is supported only with update.");
+    }
+    if (name !== undefined && command !== "install" && command !== "update") {
+      throw new PowError("--name is supported only with install or update.");
     }
 
     if (command === "validate") {
@@ -436,7 +465,7 @@ export async function run(args, options = {}) {
       return 0;
     }
     if (command === "install" || command === "update") {
-      return await synchronize(command, context, force);
+      return await synchronize(command, context, force, name);
     }
     if (command === "uninstall") return await uninstall(context);
     if (command === "list") return await listInstalled(context);

@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-27",
+  "node": {
+    "tests": 41,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": "Windows authorized workspace-temp execution; includes source-cache migration and source-symlink tests"
+  },
+  "python_cxd": {
+    "windows": {
+      "run": 47,
+      "skipped": 2,
+      "failed": 0,
+      "evidence": "GitHub CI Python3.10/3.12; local Windows platform11 cases also passed"
+    },
+    "linux_wsl_native_filesystem": {
+      "run": 44,
+      "skipped": 1,
+      "failed": 0
+    },
+    "linux_ci": {
+      "run": 47,
+      "skipped": 4,
+      "failed": 0,
+      "evidence": "GitHub CI Python3.10/3.12"
+    }
+  },
+  "python_native_helpers": {
+    "windows_run": 26,
+    "linux_run": 26,
+    "failed": 0
+  },
+  "python_measurement": {
+    "windows_run": 10,
+    "linux_run": 10,
+    "failed": 0
+  },
+  "example_project_tests": 19,
+  "native_source_tests": {
+    "0.156.1": 9,
+    "0.164.0-alpha.11.1": 9,
+    "failed": 0
+  },
+  "repository_skill_validation": 13,
+  "github_ci": {
+    "commit": "64ccbce7964df3823c2dca12f3e6b7c3fd8ff268",
+    "url": "https://github.com/harnakam/POW/actions/runs/40500892040",
+    "conclusion": "success",
+    "matrix": "Node20/22 on Windows/Linux/macOS; Python3.10/3.12 on Windows/Linux"
+  },
+  "resolved_findings": [
+    "Native queued admission cancellation covered by regression tests; running handler cleanup preserved",
+    "cxd bridge uses workdir field instead of PowerShell-specific workspace quoting",
+    "Git attributes preserve published patch, fixture and generated bundle bytes across Windows/Linux checkout",
+    "Windows resident response sharing race: bounded read/unlink retries within the existing request deadline; no command resubmission, permanent failure preserved",
+    "Skill installer excludes generated Python caches only from source assets; installed-file ownership checks remain complete and pre-filter symlink rejection remains intact"
+  ],
+  "deployment": {
+    "new_skill": "optimize-latency",
+    "user_environment_override_applied": true,
+    "running_desktop_verified": false,
+    "release_binary_verified": true,
+    "skill_python_cache_resources": 0,
+    "legacy_cxd_runtime_updated": true,
+    "global_operating_policy_blocks_verified": 3,
+    "date": "2026-10-28",
+    "restart_required": true,
+    "concurrency": 16,
+    "guardian_reserve": 1,
+    "environment_notification": "sent"
+  },
+  "limitations": [
+    "Counts describe the listed suites, not the entire upstream Codex test suite",
+    "Historical dev E2E proofs do not verify the corrected release binary",
+    "No native whole-turn or universal speedup is claimed",
+    "The process that held the transient Windows file handle was not identified from CI logs"
+  ],
+  "normal_workspace_verification": {
+    "runs": 1,
+    "tests": 4,
+    "parallel_checks": 3,
+    "elapsed_s": 0.735,
+    "scope": "subprocess project checks; excludes model and Tool transport; no speed comparison"
+  }
+}

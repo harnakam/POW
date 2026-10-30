@@ -1,0 +1,132 @@
+{
+  "upstream_tag": "rust-v0.164.0-alpha.11.1",
+  "upstream_commit": "6905ecede7816e91373e9eabda3f6b0368fc747b",
+  "patch": {
+    "sha256": "99b648ea8a035ea16c9413d773f5ab49df6cbbdefbb1102c4002c0d3c7345a7c",
+    "path": "native/patches/codex-0.164.0-alpha.11.1-native-admission.patch"
+  },
+  "binary": {
+    "sha256": "15d458361b6d972f3b8b25755049dc25534de02a65c6cb868cbe7527c8b6bcbd",
+    "size": 364116992,
+    "version": "0.164.0-alpha.11.1",
+    "profile": "release"
+  },
+  "scheduler": {
+    "primary_limit": "N",
+    "environment_variable": "CODEX_NATIVE_TOOL_CONCURRENCY",
+    "range": [
+      1,
+      1024
+    ],
+    "guardian_reserve": 1
+  },
+  "build": {
+    "timing_audit": "overnight-build-audit.json",
+    "lto": "thin",
+    "static_crt": true,
+    "raw_log_includes_system_sleep": true,
+    "toolchain": "1.95.0",
+    "stack_bytes": 8388608,
+    "opt_level": 3,
+    "exit_code": 0,
+    "command": "cargo +1.95.0 build --offline --release -p codex-cli --bin codex",
+    "upstream_recommended_toolchain": "1.99.1",
+    "log": "release-build-2026-10-28.log",
+    "working_directory": "codex-desktop-scheduler-fork/codex-rs",
+    "profile": "release",
+    "raw_cargo_elapsed": "902m04s",
+    "system_sleep_seconds": 49312.1892735,
+    "approximate_awake_elapsed_seconds": 4811.8107265,
+    "timing_interpretation": "Cargo raw elapsed includes system sleep. Approximate awake elapsed subtracts the verified sleep interval; it is not pure compiler CPU time.",
+    "toolchain_note": "Upstream rust-toolchain.toml requests1.99.1; installed1.95.0 was reused while compiling.1.99.1 availability/performance was not tested;1.95 passed debug build, corrected9tests and final optimized release."
+  },
+  "tests": {
+    "exit_code": 0,
+    "count": 9,
+    "log": "tests-cancellation-fix.log"
+  },
+  "helpers": [
+    {
+      "name": "codex-code-mode-host.exe",
+      "size": 78139696,
+      "sha256": "2727abaa2b30eb4afbe64b1da51a26cb594dd18dda82c6292b5373b15a758257"
+    },
+    {
+      "name": "codex-command-runner.exe",
+      "size": 8743216,
+      "sha256": "598fbfbad52ccd717b60aa94185541ccecf27e849349026f93884e9519f7ac61"
+    },
+    {
+      "name": "codex-windows-sandbox-service.exe",
+      "size": 56033584,
+      "sha256": "2f0a6b5c0a65d6598d335a23c989a5605464d6ec1dd53be4148b70cce5fd02bd"
+    },
+    {
+      "name": "codex-windows-sandbox-setup.exe",
+      "size": 18792240,
+      "sha256": "5765c3951b2c247611dec18176660bd3d2e81f20baba61096b454888ee821b2c"
+    },
+    {
+      "name": "rg.exe",
+      "size": 4352304,
+      "sha256": "c8b5577f2c01f691e806c1cbd409bf27bdef316682f7e2b57db24a9c8746d510"
+    }
+  ],
+  "lock_normalization": "lock-normalization.json",
+  "desktop_activated": false,
+  "proof_status": "passed",
+  "proofs": {
+    "unelevated": {
+      "status": "passed",
+      "selected_windows_sandbox": "unelevated",
+      "command_exit_codes": [
+        0
+      ],
+      "paid_model_requests": 0,
+      "loopback_provider_requests": 2,
+      "native_enabled": true,
+      "native_admitted": true,
+      "result": "dispatch-proof-release-2026-10-28-unelevated/code_mode/result.json",
+      "trace": "dispatch-proof-release-2026-10-28-unelevated/code_mode/native-trace.jsonl"
+    },
+    "mxc": {
+      "status": "passed",
+      "selected_windows_sandbox": "mxc",
+      "command_exit_codes": [
+        0
+      ],
+      "paid_model_requests": 0,
+      "loopback_provider_requests": 2,
+      "native_enabled": true,
+      "native_admitted": true,
+      "result": "dispatch-proof-release-2026-10-28-mxc/code_mode/result.json",
+      "trace": "dispatch-proof-release-2026-10-28-mxc/code_mode/native-trace.jsonl"
+    }
+  },
+  "limitations": [
+    "Live Desktop activation is owned by the parent and has not occurred in these isolated tests.",
+    "Admission applies to submitted native ToolRegistry leaf calls within one process, preserving existing parallel-safety gates; it does not rewrite sequential awaits or provide cross-process quotas, task DAG/resource scheduling, or coverage of ExecServer-only requests.",
+    "Direct-mode exec_command advertisement is unavailable for the authoritative CodeModeOnly model catalog in0.164; actual CodeMode-to-native callback execution is verified."
+  ],
+  "deployment": {
+    "date": "2026-10-28",
+    "scope": "Windows user environment; new local Desktop processes",
+    "configuration_applied": true,
+    "concurrency": 16,
+    "guardian_reserve": 1,
+    "environment_notification": "sent",
+    "user_environment_values_verified": true,
+    "running_engine_verified": false,
+    "restart_required": true,
+    "optimal_concurrency_measured": false,
+    "final_delivery_mxc_proof": {
+      "status": "passed",
+      "selected_windows_sandbox": "mxc",
+      "command_exit_code": 0,
+      "loopback_provider_requests": 2,
+      "paid_model_requests": 0,
+      "native_admission_confirmed": true,
+      "binary_sha256": "15d458361b6d972f3b8b25755049dc25534de02a65c6cb868cbe7527c8b6bcbd"
+    }
+  }
+}

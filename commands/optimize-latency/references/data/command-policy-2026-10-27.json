@@ -1,0 +1,258 @@
+{
+  "scope": "synthetic callable sleeps; same 5 jobs, exact supplied estimates; no subprocess/tool/model startup",
+  "samples_per_mode": 3,
+  "order": [
+    "serial",
+    "fifo",
+    "critical_path",
+    "critical_path",
+    "fifo",
+    "serial",
+    "fifo",
+    "serial",
+    "critical_path"
+  ],
+  "samples": [
+    {
+      "mode": "serial",
+      "elapsed_s": 0.48499999998603016,
+      "jobs": {
+        "leaf1": {
+          "start_s": 0.0,
+          "end_s": 0.0779999999795109
+        },
+        "leaf2": {
+          "start_s": 0.0779999999795109,
+          "end_s": 0.1720000000204891
+        },
+        "leaf3": {
+          "start_s": 0.1720000000204891,
+          "end_s": 0.25
+        },
+        "root": {
+          "start_s": 0.25,
+          "end_s": 0.375
+        },
+        "child": {
+          "start_s": 0.375,
+          "end_s": 0.48499999998603016
+        }
+      }
+    },
+    {
+      "mode": "fifo",
+      "elapsed_s": 0.34299999999348074,
+      "jobs": {
+        "leaf1": {
+          "start_s": 0.0,
+          "end_s": 0.09299999999348074
+        },
+        "leaf2": {
+          "start_s": 0.015000000013969839,
+          "end_s": 0.09299999999348074
+        },
+        "leaf3": {
+          "start_s": 0.09299999999348074,
+          "end_s": 0.17099999997299165
+        },
+        "root": {
+          "start_s": 0.09299999999348074,
+          "end_s": 0.21799999999348074
+        },
+        "child": {
+          "start_s": 0.21799999999348074,
+          "end_s": 0.34299999999348074
+        }
+      }
+    },
+    {
+      "mode": "critical_path",
+      "elapsed_s": 0.25,
+      "jobs": {
+        "leaf1": {
+          "start_s": 0.0,
+          "end_s": 0.0940000000409782
+        },
+        "leaf2": {
+          "start_s": 0.0940000000409782,
+          "end_s": 0.1720000000204891
+        },
+        "leaf3": {
+          "start_s": 0.1720000000204891,
+          "end_s": 0.25
+        },
+        "root": {
+          "start_s": 0.0,
+          "end_s": 0.125
+        },
+        "child": {
+          "start_s": 0.125,
+          "end_s": 0.25
+        }
+      }
+    },
+    {
+      "mode": "critical_path",
+      "elapsed_s": 0.25,
+      "jobs": {
+        "leaf1": {
+          "start_s": 0.0,
+          "end_s": 0.0940000000409782
+        },
+        "leaf2": {
+          "start_s": 0.0940000000409782,
+          "end_s": 0.1720000000204891
+        },
+        "leaf3": {
+          "start_s": 0.1720000000204891,
+          "end_s": 0.25
+        },
+        "root": {
+          "start_s": 0.0,
+          "end_s": 0.125
+        },
+        "child": {
+          "start_s": 0.125,
+          "end_s": 0.25
+        }
+      }
+    },
+    {
+      "mode": "fifo",
+      "elapsed_s": 0.3119999999180436,
+      "jobs": {
+        "leaf1": {
+          "start_s": 0.0,
+          "end_s": 0.0779999999795109
+        },
+        "leaf2": {
+          "start_s": 0.0,
+          "end_s": 0.0779999999795109
+        },
+        "leaf3": {
+          "start_s": 0.0779999999795109,
+          "end_s": 0.1559999999590218
+        },
+        "root": {
+          "start_s": 0.0779999999795109,
+          "end_s": 0.2029999999795109
+        },
+        "child": {
+          "start_s": 0.2029999999795109,
+          "end_s": 0.3119999999180436
+        }
+      }
+    },
+    {
+      "mode": "serial",
+      "elapsed_s": 0.4839999999385327,
+      "jobs": {
+        "leaf1": {
+          "start_s": 0.0,
+          "end_s": 0.0779999999795109
+        },
+        "leaf2": {
+          "start_s": 0.0779999999795109,
+          "end_s": 0.1559999999590218
+        },
+        "leaf3": {
+          "start_s": 0.1559999999590218,
+          "end_s": 0.25
+        },
+        "root": {
+          "start_s": 0.25,
+          "end_s": 0.3589999999385327
+        },
+        "child": {
+          "start_s": 0.3589999999385327,
+          "end_s": 0.4839999999385327
+        }
+      }
+    },
+    {
+      "mode": "fifo",
+      "elapsed_s": 0.3279999999795109,
+      "jobs": {
+        "leaf1": {
+          "start_s": 0.0,
+          "end_s": 0.0779999999795109
+        },
+        "leaf2": {
+          "start_s": 0.0,
+          "end_s": 0.0779999999795109
+        },
+        "leaf3": {
+          "start_s": 0.0779999999795109,
+          "end_s": 0.1559999999590218
+        },
+        "root": {
+          "start_s": 0.0779999999795109,
+          "end_s": 0.2029999999795109
+        },
+        "child": {
+          "start_s": 0.2029999999795109,
+          "end_s": 0.3279999999795109
+        }
+      }
+    },
+    {
+      "mode": "serial",
+      "elapsed_s": 0.48499999998603016,
+      "jobs": {
+        "leaf1": {
+          "start_s": 0.0,
+          "end_s": 0.0779999999795109
+        },
+        "leaf2": {
+          "start_s": 0.0779999999795109,
+          "end_s": 0.1559999999590218
+        },
+        "leaf3": {
+          "start_s": 0.1559999999590218,
+          "end_s": 0.25
+        },
+        "root": {
+          "start_s": 0.25,
+          "end_s": 0.375
+        },
+        "child": {
+          "start_s": 0.375,
+          "end_s": 0.48499999998603016
+        }
+      }
+    },
+    {
+      "mode": "critical_path",
+      "elapsed_s": 0.25,
+      "jobs": {
+        "leaf1": {
+          "start_s": 0.0,
+          "end_s": 0.0779999999795109
+        },
+        "leaf2": {
+          "start_s": 0.0779999999795109,
+          "end_s": 0.1559999999590218
+        },
+        "leaf3": {
+          "start_s": 0.1559999999590218,
+          "end_s": 0.25
+        },
+        "root": {
+          "start_s": 0.0,
+          "end_s": 0.125
+        },
+        "child": {
+          "start_s": 0.125,
+          "end_s": 0.23499999998603016
+        }
+      }
+    }
+  ],
+  "median_s": {
+    "serial": 0.48499999998603016,
+    "fifo": 0.3279999999795109,
+    "critical_path": 0.25
+  },
+  "critical_vs_fifo_reduction_percent": 23.780487800116866,
+  "critical_vs_serial_reduction_percent": 48.45360824593795
+}

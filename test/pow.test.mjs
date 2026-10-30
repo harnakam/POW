@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -262,4 +263,136 @@ test("manifest validation rejects file paths outside an owned command", async (t
 
   assert.equal(result.exitCode, 1);
   assert.match(result.stderr.join("\n"), /unsafe file record/);
+});
+
+test("scoped install copies only the selected skill and its resources", async (t) => {
+  const fixture = await makeFixture(t);
+  const selected = await writeCommand(fixture.repoRoot, "optimize-latency");
+  await mkdir(path.join(selected, "references"));
+  await writeFile(path.join(selected, "references", "guide.md"), "Measured workflow.\n");
+  await writeCommand(fixture.repoRoot, "unrelated");
+  const result = await invoke(["install", "--name", "optimize-latency"], fixture);
+  assert.equal(result.exitCode, 0);
+  assert.equal(await readFile(path.join(fixture.codexHome, "skills", "optimize-latency", "references", "guide.md"), "utf8"), "Measured workflow.\n");
+  await assert.rejects(readFile(path.join(fixture.codexHome, "skills", "unrelated", "SKILL.md")), { code: "ENOENT" });
+  const manifest = JSON.parse(await readFile(path.join(fixture.codexHome, ".pow", "manifest.json"), "utf8"));
+  assert.deepEqual(Object.keys(manifest.commands), ["optimize-latency"]);
+});
+
+test("scoped update preserves other owned records and local changes", async (t) => {
+  const fixture = await makeFixture(t);
+  await writeCommand(fixture.repoRoot, "selected", "Version one.\n");
+  await writeCommand(fixture.repoRoot, "other", "Original.\n");
+  assert.equal((await invoke(["install"], fixture)).exitCode, 0);
+  const manifestPath = path.join(fixture.codexHome, ".pow", "manifest.json");
+  const before = JSON.parse(await readFile(manifestPath, "utf8"));
+  const otherFile = path.join(fixture.codexHome, "skills", "other", "SKILL.md");
+  await writeFile(otherFile, "Local changes.\n");
+  await writeCommand(fixture.repoRoot, "selected", "Version two.\n");
+  assert.equal((await invoke(["update", "--name", "selected"], fixture)).exitCode, 0);
+  assert.match(await readFile(path.join(fixture.codexHome, "skills", "selected", "SKILL.md"), "utf8"), /Version two/);
+  assert.equal(await readFile(otherFile, "utf8"), "Local changes.\n");
+  const after = JSON.parse(await readFile(manifestPath, "utf8"));
+  assert.deepEqual(after.commands.other, before.commands.other);
+});
+
+test("invalid scoped selectors fail before any installation writes", async (t) => {
+  const fixture = await makeFixture(t);
+  await writeCommand(fixture.repoRoot, "selected");
+  const cases = [
+    ["install", "--name", "unknown"],
+    ["install", "--name"],
+    ["install", "--name", "../selected"],
+    ["install", "--name", "selected", "--name", "selected"],
+    ["install", "--name", "--force"],
+    ["install", "--name", "selected", "--bad"],
+    ["uninstall", "--name", "selected"],
+  ];
+  for (const args of cases) {
+    assert.equal((await invoke(args, fixture)).exitCode, 1, args.join(" "));
+    await assert.rejects(readFile(path.join(fixture.codexHome, ".pow", "manifest.json")), { code: "ENOENT" });
+    await assert.rejects(readFile(path.join(fixture.codexHome, "skills", "selected", "SKILL.md")), { code: "ENOENT" });
+  }
+});
+
+test("scoped force update refuses to adopt an unowned skill", async (t) => {
+  const fixture = await makeFixture(t);
+  await writeCommand(fixture.repoRoot, "selected");
+  const foreign = path.join(fixture.codexHome, "skills", "selected");
+  await mkdir(foreign, { recursive: true });
+  await writeFile(path.join(foreign, "SKILL.md"), "Foreign.\n");
+  const result = await invoke(["update", "--force", "--name", "selected"], fixture);
+  assert.equal(result.exitCode, 1);
+  assert.match(result.stderr.join("\n"), /not owned by POW/);
+  assert.equal(await readFile(path.join(foreign, "SKILL.md"), "utf8"), "Foreign.\n");
+});
+
+test("source Python caches are excluded from copied resources and ownership", async (t) => {
+  const fixture = await makeFixture(t);
+  const source = await writeCommand(fixture.repoRoot, "selected");
+  await mkdir(path.join(source, "scripts", "__pycache__"), { recursive: true });
+  await writeFile(path.join(source, "scripts", "main.py"), "print('real source')\n");
+  await writeFile(path.join(source, "scripts", "__pycache__", "main.cpython-312.pyc"), "cache");
+  await writeFile(path.join(source, "scripts", "__pycache__", "metadata.txt"), "cache metadata");
+  await writeFile(path.join(source, "scripts", "legacy.pyc"), "cache");
+  await writeFile(path.join(source, "legacy.pyo"), "optimized cache");
+  assert.equal((await invoke(["install", "--name", "selected"], fixture)).exitCode, 0);
+  const manifest = JSON.parse(await readFile(path.join(fixture.codexHome, ".pow", "manifest.json"), "utf8"));
+  assert.deepEqual(Object.keys(manifest.commands.selected.files).sort(), ["SKILL.md", "scripts/main.py"]);
+  for (const relative of ["scripts/__pycache__/main.cpython-312.pyc", "scripts/__pycache__/metadata.txt", "scripts/legacy.pyc", "legacy.pyo"]) {
+    await assert.rejects(readFile(path.join(fixture.codexHome, "skills", "selected", relative)), { code: "ENOENT" });
+  }
+});
+
+test("unchanged previously owned Python cache is removed during normal scoped update", async (t) => {
+  const fixture = await makeFixture(t);
+  await writeCommand(fixture.repoRoot, "selected", "Version one.\n");
+  assert.equal((await invoke(["install"], fixture)).exitCode, 0);
+  const manifestPath = path.join(fixture.codexHome, ".pow", "manifest.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  const cache = path.join(fixture.codexHome, "skills", "selected", "scripts", "__pycache__", "main.pyc");
+  await mkdir(path.dirname(cache), { recursive: true });
+  await writeFile(cache, "old owned cache");
+  manifest.commands.selected.files["scripts/__pycache__/main.pyc"] = createHash("sha256").update("old owned cache").digest("hex");
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  await writeCommand(fixture.repoRoot, "selected", "Version two.\n");
+  assert.equal((await invoke(["update", "--name", "selected"], fixture)).exitCode, 0);
+  await assert.rejects(readFile(cache), { code: "ENOENT" });
+  const updated = JSON.parse(await readFile(manifestPath, "utf8"));
+  assert.deepEqual(Object.keys(updated.commands.selected.files), ["SKILL.md"]);
+});
+
+test("unowned installed Python cache still blocks normal update and uninstall", async (t) => {
+  const fixture = await makeFixture(t);
+  await writeCommand(fixture.repoRoot, "selected");
+  assert.equal((await invoke(["install"], fixture)).exitCode, 0);
+  const cache = path.join(fixture.codexHome, "skills", "selected", "__pycache__", "local.pyc");
+  await mkdir(path.dirname(cache));
+  await writeFile(cache, "local unowned cache");
+  for (const args of [["update", "--name", "selected"], ["uninstall"]]) {
+    const result = await invoke(args, fixture);
+    assert.equal(result.exitCode, 1);
+    assert.match(result.stderr.join("\n"), /locally modified/);
+    assert.equal(await readFile(cache, "utf8"), "local unowned cache");
+  }
+});
+
+test("cache-name source symlinks are rejected before source exclusions", async (t) => {
+  const fixture = await makeFixture(t);
+  const source = await writeCommand(fixture.repoRoot, "selected");
+  const target = path.join(fixture.repoRoot, "external-cache");
+  await mkdir(target);
+  try {
+    await symlink(target, path.join(source, "__pycache__"), "junction");
+  } catch (error) {
+    if (["EPERM", "EACCES", "ENOTSUP"].includes(error.code)) {
+      t.skip("This environment does not permit creating a source symlink.");
+      return;
+    }
+    throw error;
+  }
+  const result = await invoke(["install", "--name", "selected"], fixture);
+  assert.equal(result.exitCode, 1);
+  assert.match(result.stderr.join("\n"), /Symbolic links/);
+  await assert.rejects(readFile(path.join(fixture.codexHome, ".pow", "manifest.json")), { code: "ENOENT" });
 });

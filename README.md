@@ -54,6 +54,7 @@ POW installs commands into `${CODEX_HOME:-~/.codex}/skills` and records SHA-256 
 | [`fuck-off`](commands/fuck-off/SKILL.md) | Turn rejected behavior into a concrete repository rule. |
 | [`js-do-it`](commands/js-do-it/SKILL.md) | Execute authorized or isolated security work without redundant hesitation. |
 | [`multi-codex`](commands/multi-codex/SKILL.md) | Fork independent work into context-preserving Codex Main tasks. |
+| [`optimize-latency`](commands/optimize-latency/SKILL.md) | Diagnose slow tasks and reduce repeated code generation, model round trips, and orchestration costs using measured evidence. |
 | [`pow-code-design`](commands/pow-code-design/SKILL.md) | Design readable code and focused extension boundaries from concrete change requirements. |
 | [`pow-first-loop`](commands/pow-first-loop/SKILL.md) | Define an ideal outcome, consult a history-free AI, and build a real executable loop toward completion. |
 | [`pow-reference`](commands/pow-reference/SKILL.md) | Learn a mechanism from pinned primary code, pass compact evidence, and retain facts with clear invalidation conditions. |
@@ -77,6 +78,27 @@ Use `$pow-reference` for unfamiliar APIs, mechanisms or ports: retrieve a releva
 Verification stops at compilation/build or direct execution of the affected flow. Use existing commands, finite timeouts, and an expected result; stop when successful and retry only after a relevant change or concrete new failure. Do not add tests, fixtures, snapshots, benchmark suites, or verification harnesses unless explicitly requested. Preserve existing tests and required build controls; report compilation-only coverage honestly. `$prove` is an explicitly requested bounded comparison, not a finishing step for every implementation. Measured duration and actual provider tokens can be reported; unknown tokens stay unknown.
 
 This workflow takes reference retrieval, source locators, compact output, and counted usage as design inspiration from [XERJ](https://github.com/xerj-org/xerj/tree/59a4617416258a8192981e49b7d82b83fd6d4307). POW does not bundle its engine, packs, background services, or automatic external feedback.
+
+## Latency optimization
+
+Use `$optimize-latency` when investigating slow Codex work. The [Japanese optimization procedure](commands/optimize-latency/references/workflow.md) covers reuse, command scheduling, selective sub-agents, measurement boundaries, and safe caching. The [2026-10-19 measured examples](commands/optimize-latency/references/measurements-2026-10-19.md) separate a comparable workflow experiment from unrelated task timings and document what remains unknown.
+
+The command also bundles [cxd for Windows and Linux](commands/optimize-latency/references/cxd.md): a Python-standard-library command DAG runner, cached read-only worker, and an ownership-preserving installer. POW copies these resources with the Skill but does not automatically install a PATH command or start a worker. No API proxy or compressor is added. Simple tasks do not require a new harness or a team of agents.
+
+To try the included example without installing cxd (use `python3` on Linux):
+
+```sh
+python -B commands/optimize-latency/scripts/cxd/dispatch.py --workspace examples/cxd check
+python -B commands/optimize-latency/scripts/cxd/dispatch.py --workspace examples/cxd stop
+```
+
+The [cxd guide](commands/optimize-latency/references/cxd.md) covers explicit installation, short presets, resident sessions, result logs, and filesystem limitations. Python 3.10+ is required only for cxd; the POW installer remains Node-only.
+
+For context compression, see the [RTK and Headroom guide](commands/optimize-latency/references/headroom.md). It covers isolated Headroom 0.41.0 installation, Codex stdio MCP integration without provider changes, local compression and retrieval, offline settings, and measured limits. These optional third-party tools are not downloaded or enabled by POW automatically.
+
+For dependency scheduling and asynchronous execution, read the [scheduler guide](commands/optimize-latency/references/scheduler.md). The [investigation method](commands/optimize-latency/references/investigation.md) explains timing attribution, concurrency settings, reproducibility, and the native integration boundary. The [2026-10-27 measurements](commands/optimize-latency/references/measurements-2026-10-27.md) record real Tool verification of three projects and distinguish it from synthetic workloads and full-turn latency.
+
+Install only this Skill with `node scripts/pow.mjs install --name optimize-latency`; use `update --name optimize-latency` for an owned installation. See the [file inventory](commands/optimize-latency/references/inventory.md) for Python/Node resources and the [native guide](commands/optimize-latency/native/README.md) for version-pinned Codex patches, Desktop inspection, isolated dispatch verification, activation, and rollback. Skill installation alone does not switch the running Desktop engine.
 
 ## Add a command manually
 

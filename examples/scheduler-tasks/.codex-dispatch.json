@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "source_roots": [
+    "janken",
+    "maze",
+    "tiny-todo"
+  ],
+  "presets": {
+    "verify-all": {
+      "jobs": [
+        {
+          "id": "janken",
+          "argv": [
+            "{python}",
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_janken"
+          ],
+          "cwd": "janken",
+          "reads": [
+            "project:janken"
+          ],
+          "writes": [
+            "temporary-tests:janken"
+          ],
+          "estimated_s": 8,
+          "timeout_s": 90
+        },
+        {
+          "id": "maze",
+          "argv": [
+            "{python}",
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_maze"
+          ],
+          "cwd": "maze",
+          "reads": [
+            "project:maze"
+          ],
+          "writes": [
+            "temporary-tests:maze"
+          ],
+          "estimated_s": 7,
+          "timeout_s": 90
+        },
+        {
+          "id": "tiny-todo",
+          "argv": [
+            "{python}",
+            "-B",
+            "-m",
+            "unittest",
+            "-v",
+            "test_todo"
+          ],
+          "cwd": "tiny-todo",
+          "reads": [
+            "project:tiny-todo"
+          ],
+          "writes": [
+            "temporary-tests:tiny-todo"
+          ],
+          "estimated_s": 4,
+          "timeout_s": 90
+        }
+      ]
+    }
+  }
+}

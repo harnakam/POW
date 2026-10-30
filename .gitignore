@@ -2,3 +2,9 @@ node_modules/
 coverage/
 *.log
 .DS_Store
+__pycache__/
+*.py[cod]
+.cxd/
+
+/work/scheduler-measurements/
+/work/test-tmp/

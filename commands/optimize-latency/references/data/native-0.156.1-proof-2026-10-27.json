@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "artifact": "historical standalone CLI0.156.1 v1 artifact; superseded source candidate is not verified by this receipt",
+  "upstream": {
+    "repository": "https://github.com/openai/codex",
+    "tag": "rust-v0.156.1",
+    "commit": "b412ff32c417f855c2b2d1581b77058eed87c84b"
+  },
+  "binary": {
+    "sha256": "18782d1bc10ef60be9344ffa602724835ad1b9646ecfeb51d2cac304e1c83ec7",
+    "bytes": 339207168
+  },
+  "patch": {
+    "path": "native/patches/codex-0.156.1-native-admission-v1.patch",
+    "sha256": "b92a8104c7401c0fb60c83024810d39e830d2f737f051cea1a6dd15ce32b69c3"
+  },
+  "scheduler": {
+    "environment_variable": "CODEX_NATIVE_TOOL_CONCURRENCY",
+    "primary_default_from_launcher": 4,
+    "review_reserve": 1,
+    "marker_presence": {
+      "CODEX_NATIVE_TOOL_CONCURRENCY": true,
+      "native tool scheduler enabled": true,
+      "native tool scheduler admitted invocation": true,
+      "review_limit": true
+    },
+    "patch_sha256": "b92a8104c7401c0fb60c83024810d39e830d2f737f051cea1a6dd15ce32b69c3",
+    "live_dispatch_verified": true
+  },
+  "build": {
+    "command": "cargo +1.95.0 build -p codex-cli --bin codex --offline",
+    "exit_code": 0,
+    "profile": "dev",
+    "reported_duration_including_test_lock_wait": "22m44s"
+  },
+  "tests": {
+    "native_core": {
+      "exit_code": 0,
+      "count": 8
+    },
+    "launcher": {
+      "exit_code": 0,
+      "count": 4
+    },
+    "end_to_end": {
+      "cases": [
+        "direct",
+        "code_mode"
+      ],
+      "passed": 2,
+      "primary_limit": 1,
+      "review_reserve": 1,
+      "sandbox": "unelevated Windows backend with read-only filesystem policy",
+      "command": "Write-Output 'native-proof'",
+      "command_exit_code": 0,
+      "model_service": "localhost fixture; no paid model requests",
+      "native_admission_trace": true
+    }
+  },
+  "native_test_cases": [
+    "tools::native_scheduler::tests::cancelling_guardian_execution_releases_review_reserve",
+    "tools::native_scheduler::tests::configuration_is_optional_but_invalid_configuration_fails_closed",
+    "tools::native_scheduler::tests::image_reads_queue_while_agent_coordination_remains_available",
+    "tools::native_scheduler::tests::control_can_dispatch_and_wait_for_child_at_limit_one",
+    "tools::native_scheduler::tests::aborting_active_execution_releases_capacity",
+    "tools::native_scheduler::tests::concurrent_calls_queue_and_cancelled_waiter_does_not_leak",
+    "tools::native_scheduler::tests::failed_execution_releases_capacity",
+    "tools::native_scheduler::tests::guardian_review_has_bounded_capacity_independent_of_approval_parents"
+  ],
+  "end_to_end": [
+    {
+      "mode": "direct",
+      "status": "passed",
+      "configured_primary_limit": 1,
+      "guardian_review_reserve": 1,
+      "loopback_response_requests": 2,
+      "paid_model_requests": 0,
+      "command": "Write-Output 'native-proof'",
+      "command_exit_codes": [
+        0
+      ],
+      "command_output": [
+        "native-proof"
+      ],
+      "native_enabled_trace": [
+        {
+          "timestamp": "2026-10-27T10:43:06.675554Z",
+          "level": "INFO",
+          "fields": {
+            "message": "native tool scheduler enabled",
+            "limit": 1,
+            "review_limit": 1
+          },
+          "target": "codex_core::tools::native_scheduler"
+        }
+      ],
+      "native_admission_trace": [
+        {
+          "timestamp": "2026-10-27T10:43:06.675763Z",
+          "level": "DEBUG",
+          "fields": {
+            "message": "native tool scheduler admitted invocation",
+            "tool": "exec_command",
+            "admission": "Leaf",
+            "wait_ms": "0"
+          },
+          "target": "codex_core::tools::registry"
+        }
+      ]
+    },
+    {
+      "mode": "code_mode",
+      "status": "passed",
+      "configured_primary_limit": 1,
+      "guardian_review_reserve": 1,
+      "loopback_response_requests": 2,
+      "paid_model_requests": 0,
+      "command": "Write-Output 'native-proof'",
+      "command_exit_codes": [
+        0
+      ],
+      "command_output": [
+        "native-proof"
+      ],
+      "native_enabled_trace": [
+        {
+          "timestamp": "2026-10-27T10:43:10.040867Z",
+          "level": "INFO",
+          "fields": {
+            "message": "native tool scheduler enabled",
+            "limit": 1,
+            "review_limit": 1
+          },
+          "target": "codex_core::tools::native_scheduler"
+        }
+      ],
+      "native_admission_trace": [
+        {
+          "timestamp": "2026-10-27T10:43:10.108674Z",
+          "level": "DEBUG",
+          "fields": {
+            "message": "native tool scheduler admitted invocation",
+            "tool": "exec_command",
+            "admission": "Leaf",
+            "wait_ms": "0"
+          },
+          "target": "codex_core::tools::registry"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Unoptimized dev build; no performance speedup claim",
+    "Only locally routed native handlers are admitted; provider-hosted execution is outside this gate",
+    "Primary capacity N plus independent Guardian reserve1; arbitrary external callbacks are not universally deadlock-proof",
+    "No default CLI alias, Desktop backend, global configuration, or user plugin settings changed by this artifact",
+    "Original raw proof includes machine paths and is retained locally; this summary omits them",
+    "Initial failed fixture had disabled Windows sandbox and attempted upstream plugin-cache401 GET; successful fixture enables sandbox, disables plugins only in child, and routes configured services to loopback"
+  ],
+  "current_source_candidate": {
+    "patch": "native/patches/codex-0.156.1-native-admission.patch",
+    "sha256": "0c60356a01103f14f74328306b5f14c9560432720d8c46a2b25a408d6b9dbc0a",
+    "reason": "Queued native admission now observes cancellation explicitly; running handler behavior unchanged",
+    "binary_verified": false,
+    "source_tests": {
+      "status": "passed",
+      "test_count": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "command": "cargo nextest run -p codex-core --lib -E test(native_scheduler) --no-fail-fast",
+      "reported_compile_duration": "7m47s",
+      "reported_test_duration": "0.218s",
+      "cases": [
+        "tools::native_scheduler::tests::queued_cancellation_returns_before_capacity_is_released_and_never_runs_handler",
+        "tools::native_scheduler::tests::aborting_active_execution_releases_capacity",
+        "tools::native_scheduler::tests::failed_execution_releases_capacity",
+        "tools::native_scheduler::tests::control_can_dispatch_and_wait_for_child_at_limit_one",
+        "tools::native_scheduler::tests::image_reads_queue_while_agent_coordination_remains_available",
+        "tools::native_scheduler::tests::configuration_is_optional_but_invalid_configuration_fails_closed",
+        "tools::native_scheduler::tests::guardian_review_has_bounded_capacity_independent_of_approval_parents",
+        "tools::native_scheduler::tests::cancelling_guardian_execution_releases_review_reserve",
+        "tools::native_scheduler::tests::concurrent_calls_queue_and_cancelled_waiter_does_not_leak"
+      ],
+      "scope": "Native source tests; 0.156 outer runtime already aborts cancelled dispatch; explicit queued cancellation is preventive hardening, not the newer finishes_on_cancellation integration regression"
+    },
+    "source_review": "passed; no additional actionable findings"
+  }
+}
