@@ -12,6 +12,15 @@ def failure(kind, *, exit_code=None, evidence_path=None, job_id=None, next_actio
     return value
 
 
+def exception_failure(error):
+    if getattr(error, 'failure', None):
+        return error.failure
+    if isinstance(error, OSError):
+        return failure('permission-denied' if isinstance(error, PermissionError) else 'io-failed',
+                       evidence_path=error.filename, next_action='inspect-access')
+    return failure('invalid-config', next_action='fix')
+
+
 def summary_failure(jobs, evidence_path=None):
     """Keep the original job cause; blocked dependants are secondary evidence."""
     failed = [(name, job) for name, job in jobs.items() if job.get('status') != 'completed']

@@ -14,10 +14,26 @@ import uuid
 
 sys.dont_write_bytecode = True
 from resident import atomic_json, inside
-from resident_rpc import Changes, alive, directories
+from resident_rpc import Changes, alive, directories, response_io
 from outcomes import failure, summary_failure
 
 _processes = {}
+
+
+def read_json(file, deadline=None):
+    """Read published metadata through the existing bounded Windows I/O guard.
+
+    Retry file access only, never a command. A permanent access failure keeps
+    the execution unobserved; it is not a failed check or invalid configuration.
+    """
+    budget = time.monotonic() + .25
+    try:
+        raw = response_io(lambda: file.read_text(encoding='utf-8-sig'),
+                          budget if deadline is None else min(deadline, budget))
+    except PermissionError as error:
+        error.failure = failure('evidence-unavailable', evidence_path=file, next_action='inspect-access')
+        raise
+    return json.loads(raw)
 
 
 def record_failure(directory, kind, error, exit_code=None):
@@ -108,12 +124,12 @@ def start_prepared(root, manifest, preset, concurrency=3, attached=False, hook=F
             'run_directory': str(directory)}
 
 
-def result(root, run_id):
+def result(root, run_id, deadline=None):
     directory = run_directory(root, run_id)
     result_path = directory / 'run/result.json'
     response = {'run_id': run_id, 'run_directory': str(directory)}
     if result_path.is_file():
-        summary = json.loads(result_path.read_text(encoding='utf-8'))
+        summary = read_json(result_path, deadline)
         cause = summary.get('failure')
         if cause is None and summary['status'] != 'completed':
             cause = summary_failure(summary.get('jobs', {}), result_path)
@@ -122,18 +138,18 @@ def result(root, run_id):
         return {**response, 'status': summary['status'], 'result_path': str(result_path),
                 'summary': summary, 'failure': cause}
     if (directory / 'failure.json').is_file():
-        recorded = json.loads((directory / 'failure.json').read_text(encoding='utf-8'))
+        recorded = read_json(directory / 'failure.json', deadline)
         return {**response, 'status': 'failed',
                 **recorded, 'failure': recorded.get('failure') or
                 failure('worker-failed', evidence_path=directory / 'failure.json')}
     owner_path = directory / 'owner.json'
     if owner_path.exists():
-        pid = json.loads(owner_path.read_text(encoding='utf-8'))['pid']
+        pid = read_json(owner_path, deadline)['pid']
         living = process_alive(pid)
         if living is False:
             # Recheck the atomic result after observing process exit.
             if result_path.exists() or (directory / 'failure.json').exists():
-                return result(root, run_id)
+                return result(root, run_id, deadline)
             owned = _processes.get(pid)
             exit_code = owned.returncode if owned is not None else None
             log_path = directory / 'runner.log'
@@ -152,10 +168,10 @@ def wait(root, run_id, timeout=60):
     changes = Changes(directory) if os.name == 'nt' or sys.platform.startswith('linux') else None
     try:
         while True:
-            value = result(root, run_id)
+            value = result(root, run_id, deadline)
             if value['status'] != 'running':
                 owner = directory / 'owner.json'
-                pid = json.loads(owner.read_text())['pid'] if owner.exists() else None
+                pid = read_json(owner, deadline)['pid'] if owner.exists() else None
                 if pid is None or process_alive(pid) is False:
                     return value
             remaining = deadline - time.monotonic()
@@ -174,7 +190,7 @@ def worker(root, run_id, close_logs=False):
     directory = run_directory(root, run_id)
     try:
         from dispatch import run_prepared
-        request = json.loads((directory / 'request.json').read_text(encoding='utf-8'))
+        request = read_json(directory / 'request.json')
         run_prepared(root, request['manifest'], directory / 'run', request['concurrency'], True)
     except (KeyboardInterrupt, asyncio.CancelledError) as error:
         record_failure(directory, 'worker-interrupted', error, 130)

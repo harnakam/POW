@@ -46,6 +46,8 @@ statの再利用は変更検出の費用を減らすための観測であり、�
 
 stderrの単語からpolicy拒否や一時的通信障害を推測しない。原因を特定できない古い記録はunknownとして扱う。失敗記録は`retryable:false`とし、同じ失敗・入力を自動再実行しない。busyやpendingの待機と、失敗した検証の再実行は分ける。
 
+Windowsで公開直後のJSONに共有handleが残る場合は、既存のI/O guardでファイル読込だけを最大250 ms、呼び出し側の残り期限以内で待つ。チェックは再実行しない。読み取れないままなら`evidence-unavailable`と正確なpathを保持し、実行結果を失敗へ書き換えない。その他のOSアクセスエラーも設定不正と区別する。
+
 ## 登録と信頼
 
 先にoptimize-latency Skillをインストール・更新する。以下のscriptはそのSkillまたはPOWクローンのscripts/以下を指す。
@@ -87,6 +89,7 @@ configureは既定でプレビューのみ。`--edit-*`はプロジェクト全�
 - 今回の差分追跡ではPOWの宣言入力97ファイル・834,836 bytesを全読込した後、未変更のPost相当の観測は97件を再利用し、内容の再読込は0 bytesだった。tree列挙・stat・起動費用は残るため、ターン全体の速度改善率とはしない。
 - 直接実行で3回の連続編集を最新内容の非同期処理1回へ集約した。次のターンで静穏待ち中にStopを呼ぶと最新編集を即時flushした。別の実行では最初の処理が実行中に次の編集を投入し、Stopで両世代を処理、遅延workerによる追加実行は0回だった。
 - 実際の同期hookのlock競合はbusyとしてblockし、処理は起動しなかった。exit 9のチェックはcheck-failedと実ログパスを保持し、未変更のPost・Stopを経ても実行数は1回だった。キャッシュの変更・rename・削除・破損復旧と、旧8-module receiptから10-moduleへの更新、未所有helperの保護、所有範囲だけのuninstallも直接実行した。新しいテスト・fixture・検証用harnessは追加していない。
+- 実運用のStopで、成功済みresult.jsonの読込に一時的なPermissionErrorが発生した。Win32の実共有lockで同じエラーを再現し、修正後は短い競合から約62 msで回復した。長い競合は指定した40 ms期限でevidence-unavailableとなり、handle解放後も元のcompletedを読めた。実際のコマンド実行数は1回を維持した。
 - 既存RTKを保持して5つのhandlerを登録し、0.156.1 CLIと稼働中Desktopの0.164.0-alpha.11.1実行器の双方で、公式hooks/listが5つともtrustedと返した。モデルを起動しない信頼登録では既存の他の信頼状態と設定を保持した。
 - 実際のCLIに、使い捨て作業場所でwelcome_back(name)関数を追加させ、一度実行してWelcome back, Adaを得た。hookの手動呼び出しは0回。SessionStart、UserPromptSubmit、PostToolUse、Stop、SessionEndが自動記録された。
 - ツールの複数回利用に対して非同期索引は1回、同期構文確認は1回。索引artifactには追加した関数名が含まれ、両実行の終了コードは0。索引の実行器時間は約3.23秒で、Stop時の索引待ちは0秒だった。これは単一の正常ケースで、全体の速度改善率ではない。

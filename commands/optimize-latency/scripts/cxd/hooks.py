@@ -12,12 +12,12 @@ import sys
 import time
 
 sys.dont_write_bytecode = True
-from async_jobs import start_prepared, result, wait, process_alive
+from async_jobs import start_prepared, result, wait, process_alive, read_json
 from command_actors import validate_manifest, resources_conflict
 from dispatch import configuration, prepare_preset
 from resident import atomic_json, inside
 from resident_rpc import directories
-from outcomes import failure, summary_failure
+from outcomes import failure, summary_failure, exception_failure
 from input_tracking import InputSnapshot, InputStateBusy
 
 
@@ -126,7 +126,7 @@ def state_lock(root):
 
 
 def load(file):
-    state = json.loads(file.read_text(encoding='utf-8')) if file.exists() else {'version': 1, 'runs': [], 'cycles': {}}
+    state = read_json(file) if file.exists() else {'version': 1, 'runs': [], 'cycles': {}}
     if state.get('version') != 1 or not isinstance(state.get('runs'), list) or not isinstance(state.get('cycles'), dict):
         raise ValueError('invalid hook state')
     return state
@@ -139,7 +139,7 @@ def observe(root, run):
     prior_status = run['status']
     owner = inside(root, '.cxd/async/' + run['run_id'] + '/owner.json')
     done = owner.with_name('done.json').is_file()
-    living = process_alive(json.loads(owner.read_text())['pid']) if owner.exists() and not done else None
+    living = process_alive(read_json(owner)['pid']) if owner.exists() and not done else None
     # done is written after this worker closes its logs; it avoids confusing a reused PID with unfinished work.
     run['status'] = prior_status if prior_status != 'running' else value['status'] if done or living is False else 'running'
     if run['status'] != 'running':
@@ -337,7 +337,7 @@ def main(argv=None, *, selected_ids=None, skip_joins=False, expected_identity=No
             print(json.dumps(response))
             return 2 if blocked else 0
     except (OSError, ValueError, KeyError, RuntimeError, TypeError) as error:
-        print(json.dumps({'error': str(error), 'failure': getattr(error, 'failure', failure('invalid-config', next_action='fix'))}), file=sys.stderr); return 1
+        print(json.dumps({'error': str(error), 'failure': exception_failure(error)}), file=sys.stderr); return 1
 
 
 if __name__ == '__main__':

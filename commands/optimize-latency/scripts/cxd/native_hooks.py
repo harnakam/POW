@@ -13,9 +13,9 @@ import uuid
 
 sys.dont_write_bytecode = True
 import hooks
-from async_jobs import wait, start_prepared, result
+from async_jobs import wait, start_prepared, result, read_json
 from input_tracking import InputSnapshot, InputStateBusy
-from outcomes import failure
+from outcomes import failure, exception_failure
 from resident import atomic_json, inside
 from resident_rpc import Changes, directories, acquire_lock
 
@@ -24,7 +24,7 @@ EVENTS = {'SessionStart': 'sessionStart', 'UserPromptSubmit': 'turnStart',
 
 
 def read(file, default):
-    return json.loads(file.read_text(encoding='utf-8-sig')) if file.exists() else default
+    return read_json(file) if file.exists() else default
 
 
 def digest(file):
@@ -287,7 +287,7 @@ def flush_edits(home, root, session_key, turn_key, ticket):
                     return {'status': 'dispatched', 'coalescing': turn['coalescing']}
                 pause = max(.001, min(.05, due - now, deadline - now))
             except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
-                cause = getattr(error, 'failure', failure('invalid-config', next_action='fix'))
+                cause = exception_failure(error)
                 worker['failure'] = cause
                 if cause['kind'] not in {'busy', 'pending', 'stale-generation'}:
                     worker['status'] = 'failed'
@@ -433,9 +433,9 @@ def run_event(home, payload, event):
                         terminal_failure = blocking_failure(data)
                         raise dispatch_error(data, 'Event hook failed, is busy or pending; completion will inspect the final inputs')
                     turn['fired'][phase] = True
-        except ValueError as error:
+        except (OSError, ValueError) as error:
             reason = str(error)
-            cause = getattr(error, 'failure', failure('invalid-config', next_action='fix'))
+            cause = exception_failure(error)
         if event == 'Stop' and not reason:
             if project(home, Path(payload['cwd']).resolve(strict=True)) != root:
                 reason = 'Authorized project changed during completion'
@@ -572,12 +572,12 @@ def main(argv=None):
     except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
         if args.action == 'event':
             # Failed parsing/authorization must not silently approve a configured completion gate.
-            message = 'POW: [' + getattr(error, 'failure', {}).get('kind', 'invalid-config') + '] ' + str(error)
+            message = 'POW: [' + exception_failure(error)['kind'] + '] ' + str(error)
             output = ({'continue': False, 'stopReason': 'POW native hook failed; completion unverified', 'systemMessage': message}
                       if args.event == 'Stop' else {'decision': 'block', 'reason': message}
                       if args.event in {'PostToolUse', 'UserPromptSubmit'} else {'systemMessage': message})
             print(json.dumps(output)); return 0
-        print(json.dumps({'error': str(error), 'failure': getattr(error, 'failure', failure('invalid-config', next_action='fix'))}), file=sys.stderr); return 1
+        print(json.dumps({'error': str(error), 'failure': exception_failure(error)}), file=sys.stderr); return 1
 
 
 if __name__ == '__main__':
