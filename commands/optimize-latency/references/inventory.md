@@ -8,7 +8,9 @@
 | `scripts/cxd/command_actors.py` | bounded DAG、依存順、失敗伝播、実行ログ、critical-path/FIFO、論理read/write排他 | コマンドは通常の隔離プロセス |
 | `scripts/cxd/async_jobs.py` | 実行ごとのsnapshotと非同期runner、状態・終了コード取得 | Codexではattached session保持 |
 | `scripts/cxd/hooks.py` | hookごとのsync/async、合流、重複抑止、鮮度・競合確認、時間と設定候補 | 明示したhooks、cycle ID。外部イベントの自動登録はしない |
-| `scripts/cxd/native_hooks.py` | Codexイベントを承認したprojectへ接続し、入力世代・Stop合流・継続上限と日々の設定調整を扱う | 明示登録・native trust・project authorization |
+| `scripts/cxd/input_tracking.py` | 入力statと内容hashの観測、追加・変更・削除の差分、境界での全bytes確認 | 対象treeは毎回列挙。観測cacheを検証成功に使わない |
+| `scripts/cxd/outcomes.py` | 失敗種別・実終了コード・証拠pathの共通metadata | 原文ログを保持し、自動retryしない |
+| `scripts/cxd/native_hooks.py` | Codexイベントを承認したprojectへ接続し、非同期編集集約・世代照合・Stop合流・継続上限を扱う | 明示登録・native trust・project authorization。集約workerは短命 |
 | `scripts/install_codex_hooks.py` / `scripts/trust_codex_hooks.py` | 既存hookを保持して所有groupを配置し、Codexの実hashと標準APIでレビュー・信頼登録 | 明示実行のみ。設定のbytesをbackup |
 | `scripts/cxd/ctx.py` | `ctx PRESET`非同期、`ctx -wait PRESET`同期 | cxdと同じ設定・権限 |
 | `scripts/cxd/resident.py` / `resident_rpc.py` | 内容hashで無効化するPython AST索引、限定読み取りworker、OS通知 | Windows / Linux local filesystem |

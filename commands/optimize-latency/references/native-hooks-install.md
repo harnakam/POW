@@ -21,7 +21,9 @@ python -B scripts/install_codex_hooks.py uninstall
 | `Stop` | 同期・必須 job の合流 | 60 秒 |
 | `SessionEnd` | 同期 | 3 秒 |
 
-`PostToolUse` は native の `async: false` を明示する。bridge が各プロジェクトの sync / async 指定を扱うため、同期 hook は tool の呼び出しに合流し、非同期 hook は cxd へ投入して戻る。native handler 全体を非同期にすると、この同期指定を保てない。
+`PostToolUse` は native の `async: false` を明示する。bridge が各プロジェクトの sync / async 指定を扱い、同期 hook と requiredAt の合流は tool の呼び出し内で待つ。非同期 afterChange だけは短命workerで編集を集約し、既存cxd実行器へ投入する。[待機窓と入力確認の設定](native-hooks.md)を参照。native handler 全体を非同期にすると、この同期指定を保てない。
+
+入力追跡・失敗分類の更新では`input_tracking.py`と`outcomes.py`もruntimeと一緒に配置する。同梱`install_cxd.py`は従来の8-module所有receiptから更新でき、無所有の同名ファイルは保護する。runtimeのパスとhandler定義が同じなら登録コマンドは変わらず、script内容の変更だけを理由に信頼hashを独自生成しない。pathやcommand、timeout、asyncなどを変えた場合はplanとCodex側の信頼確認をやり直す。
 
 Windows の native hook はセッションで選んだ shell を使い、未指定時は `cmd.exe` を使う。`commandWindows` は両方で動く形式を使う。Python の絶対パスが英数字・`_:/\\.-` のみで、runtime パスに shell 展開文字がない場合は Python を直接起動する。それ以外は `powershell.exe -NoProfile -NonInteractive -EncodedCommand` で引用を保持する。payload は絶対パスを単一引用符で囲み、apostrophe を escape する。空白、Unicode、`%`、`!` を含むパスも shell 展開せず渡せる。fallback では子 PowerShell の起動費用が加わる。POSIX の `command` は shell 引用する。
 

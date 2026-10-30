@@ -49,7 +49,11 @@ cxd hooks profile --workspace <repo>
 
 `--timeout 0..60`は呼び出し側の待機上限。ジョブ自体のtimeoutとは別で、期限超過はexit 2、ジョブは設定済み上限まで継続する。configや入力が壊れても`status`は保存済みジョブを表示する。詳細は`cxd result ID`、待機は`cxd wait ID --timeout 60`。保存したPIDだけを根拠に別プロセスを強制終了する機能は追加しない。
 
+失敗したjobやhook結果は`failure.kind`、`retryable:false`、元の`exitCode`、`evidencePath`を返す。spawn失敗、コマンドの非0終了、timeout、依存失敗、worker中断、busy/pending、staleを区別し、stdout/stderrと実行記録を残す。stderrの文字列からpolicy拒否や通信障害を推測せず、同じ失敗を自動retryしない。
+
 hook内のemitは継承する環境マーカーで拒否する。意図しない再帰の防止でありコードの隔離ではない。明示的なemitに加え、[native統合](native-hooks.md)を登録するとCodexイベントから自動発火できる。Skillを入れるだけで自動登録することはない。native adapterの`--resume`は同じcycle・同じ入力に記録された実行を合流し、ターン内の完了確認で重複実行を避ける。通常のemitは既定で終了済み処理を再利用しない。
+
+native統合ではPostToolUseの変更観測を増分化し、非同期afterChangeの編集burstを上限付きで集約する。同期hookとrequiredAtの合流は即時のまま。UserPromptSubmitとStopは全入力をbytesから読み、Stopで保留中の最新世代をflushする。手動emitにはこの待機窓を追加しない。
 
 ## 最適化と保存
 

@@ -1,4 +1,5 @@
 """Persistent command runs using the existing scheduler and file notifications."""
+import asyncio
 import json
 import math
 import os
@@ -8,13 +9,27 @@ import subprocess
 import sys
 import time
 import threading
+import traceback
 import uuid
 
 sys.dont_write_bytecode = True
 from resident import atomic_json, inside
 from resident_rpc import Changes, alive, directories
+from outcomes import failure, summary_failure
 
 _processes = {}
+
+
+def record_failure(directory, kind, error, exit_code=None):
+    """Keep diagnostics in local evidence, rather than echoing them in metadata."""
+    log_path = directory / 'runner.log'
+    with log_path.open('a', encoding='utf-8') as log:
+        traceback.print_exception(type(error), error, error.__traceback__, file=log)
+    atomic_json(directory / 'failure.json', {
+        'status': 'interrupted' if kind == 'worker-interrupted' else 'failed',
+        'error': f'{kind} ({type(error).__name__}); inspect runner.log',
+        'errorType': type(error).__name__,
+        'failure': failure(kind, exit_code=exit_code, evidence_path=log_path)})
 
 
 def process_alive(pid):
@@ -87,7 +102,7 @@ def start_prepared(root, manifest, preset, concurrency=3, attached=False, hook=F
         _processes[process.pid] = process
         threading.Thread(target=process.wait, daemon=True).start()
     except OSError as error:
-        atomic_json(directory / 'failure.json', {'error': str(error)})
+        record_failure(directory, 'spawn-failed', error)
         raise
     return {'run_id': run_id, 'status': 'submitted', 'pid': process.pid,
             'run_directory': str(directory)}
@@ -99,11 +114,18 @@ def result(root, run_id):
     response = {'run_id': run_id, 'run_directory': str(directory)}
     if result_path.is_file():
         summary = json.loads(result_path.read_text(encoding='utf-8'))
+        cause = summary.get('failure')
+        if cause is None and summary['status'] != 'completed':
+            cause = summary_failure(summary.get('jobs', {}), result_path)
+            if cause is None:
+                cause = failure('unknown-failure', evidence_path=result_path)
         return {**response, 'status': summary['status'], 'result_path': str(result_path),
-                'summary': summary}
+                'summary': summary, 'failure': cause}
     if (directory / 'failure.json').is_file():
+        recorded = json.loads((directory / 'failure.json').read_text(encoding='utf-8'))
         return {**response, 'status': 'failed',
-                **json.loads((directory / 'failure.json').read_text(encoding='utf-8'))}
+                **recorded, 'failure': recorded.get('failure') or
+                failure('worker-failed', evidence_path=directory / 'failure.json')}
     owner_path = directory / 'owner.json'
     if owner_path.exists():
         pid = json.loads(owner_path.read_text(encoding='utf-8'))['pid']
@@ -112,7 +134,12 @@ def result(root, run_id):
             # Recheck the atomic result after observing process exit.
             if result_path.exists() or (directory / 'failure.json').exists():
                 return result(root, run_id)
-            return {**response, 'status': 'interrupted', 'error': 'runner exited without a result'}
+            owned = _processes.get(pid)
+            exit_code = owned.returncode if owned is not None else None
+            log_path = directory / 'runner.log'
+            return {**response, 'status': 'interrupted', 'error': 'runner exited without a result',
+                    'failure': failure('worker-exited-missing-result', exit_code=exit_code,
+                                       evidence_path=log_path if log_path.is_file() else owner_path)}
     return {**response, 'status': 'running'}
 
 
@@ -144,13 +171,16 @@ def wait(root, run_id, timeout=60):
 
 
 def worker(root, run_id, close_logs=False):
-    from dispatch import run_prepared
     directory = run_directory(root, run_id)
-    request = json.loads((directory / 'request.json').read_text(encoding='utf-8'))
     try:
+        from dispatch import run_prepared
+        request = json.loads((directory / 'request.json').read_text(encoding='utf-8'))
         run_prepared(root, request['manifest'], directory / 'run', request['concurrency'], True)
+    except (KeyboardInterrupt, asyncio.CancelledError) as error:
+        record_failure(directory, 'worker-interrupted', error, 130)
+        return 130
     except Exception as error:
-        atomic_json(directory / 'failure.json', {'error': f'{type(error).__name__}: {error}'})
+        record_failure(directory, 'worker-failed', error, 1)
         return 1
     finally:
         if close_logs:

@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 from datetime import datetime, timezone
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import CancelledError, ThreadPoolExecutor
 import json
 import math
 import os
@@ -16,6 +16,8 @@ import subprocess
 import sys
 import time
 import threading
+
+from outcomes import failure, summary_failure
 
 
 def validate_manifest(manifest, concurrency=4, base_dir=None, handlers=None):
@@ -226,7 +228,7 @@ def run_manifest_sync(manifest, output, concurrency=4, *, emit_events=True,
         result = {'status': None, 'returncode': None, 'start_s': None,
                   'end_s': None, 'duration_s': 0.0,
                   'process_started_s': None, 'process_ended_s': None, 'process_id': None,
-                  'stdout_path': str(stdout_path), 'stderr_path': str(stderr_path)}
+                  'stdout_path': str(stdout_path), 'stderr_path': str(stderr_path), 'failure': None}
         begin = time.monotonic()
         result['start_s'] = begin - started
         messages.put(('event', 'start', job_id))
@@ -252,14 +254,25 @@ def run_manifest_sync(manifest, output, concurrency=4, *, emit_events=True,
                 try:
                     process.wait(timeout=job['timeout_s'])
                     result['status'] = 'completed' if process.returncode == 0 else 'failed'
+                    if process.returncode != 0:
+                        result['failure'] = failure('check-failed', exit_code=process.returncode,
+                                                    evidence_path=stderr_path)
                 except subprocess.TimeoutExpired:
+                    result['status'] = 'timed_out'
+                    result['failure'] = failure('timeout', evidence_path=stderr_path)
                     _terminate_tree(process, stderr)
                     stderr.write(f'\ncommand timed out after {job["timeout_s"]} seconds\n'.encode())
-                    result['status'] = 'timed_out'
                 result['returncode'] = process.returncode
+            except (asyncio.CancelledError, CancelledError, KeyboardInterrupt):
+                result['status'] = 'cancelled'
+                result['failure'] = failure('cancelled', evidence_path=stderr_path)
             except Exception as error:
                 stderr.write(f'{type(error).__name__}: {error}\n'.encode('utf-8'))
-                result['status'] = 'failed'
+                if result['failure'] is None:
+                    result['status'] = 'failed'
+                    kind = ('operation-failed' if 'operation' in job else
+                            'spawn-failed' if process is None else 'worker-failed')
+                    result['failure'] = failure(kind, evidence_path=stderr_path)
                 if 'operation' in job:
                     result['returncode'] = 1
             finally:
@@ -270,6 +283,9 @@ def run_manifest_sync(manifest, output, concurrency=4, *, emit_events=True,
                         processes.pop(job_id, None)
                         running_processes -= 1
                     result['process_ended_s'] = time.monotonic() - started
+                    result['returncode'] = process.returncode
+                if result['failure'] is not None:
+                    result['failure']['exitCode'] = result['returncode']
                 result['end_s'] = time.monotonic() - started
                 result['duration_s'] = time.monotonic() - begin
         return result
@@ -297,8 +313,9 @@ def run_manifest_sync(manifest, output, concurrency=4, *, emit_events=True,
                                       'end_s': time.monotonic() - started, 'duration_s': 0.0,
                                       'process_started_s': None, 'process_ended_s': None,
                                       'process_id': None, 'stdout_path': str(stdout_path),
-                                      'stderr_path': str(stderr_path), 'blocked_by': failed}
-                    emit('blocked', job_id, returncode=None)
+                                      'stderr_path': str(stderr_path), 'blocked_by': failed,
+                                      'failure': failure('dependency-blocked', evidence_path=stderr_path)}
+                    emit('blocked', job_id, returncode=None, failure=results[job_id]['failure'])
                 else:
                     if len(active) >= concurrency or any(
                             resources_conflict(job, jobs[name]) for name in active):
@@ -316,7 +333,8 @@ def run_manifest_sync(manifest, output, concurrency=4, *, emit_events=True,
                 _, job_id, future = message
                 results[job_id] = future.result()
                 del active[job_id]
-                emit(results[job_id]['status'], job_id, returncode=results[job_id]['returncode'])
+                emit(results[job_id]['status'], job_id, returncode=results[job_id]['returncode'],
+                     failure=results[job_id]['failure'])
     finally:
         if pending or active:
             for future in active.values():
@@ -335,6 +353,7 @@ def run_manifest_sync(manifest, output, concurrency=4, *, emit_events=True,
         'concurrency': concurrency, 'scheduling': policy,
         'critical_path_scores': scores,
         'jobs': {job_id: results[job_id] for job_id in jobs}}
+    summary['failure'] = summary_failure(summary['jobs'], output / 'result.json')
     _atomic_json(output / 'result.json', summary)
     return summary
 

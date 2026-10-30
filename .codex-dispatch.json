@@ -7,7 +7,10 @@
     "waitSeconds": 30,
     "maxStopContinuations": 1,
     "verifyReadOnlyTurns": false,
-    "profileOnStop": true
+    "profileOnStop": true,
+    "editQuietMs": 200,
+    "editMaxMs": 1000,
+    "editWorkerSeconds": 60
   },
   "presets": {
     "refresh-workflow": {

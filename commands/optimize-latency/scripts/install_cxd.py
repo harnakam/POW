@@ -11,7 +11,8 @@ import tempfile
 LEGACY_FILES = ('dispatch.py', 'command_actors.py', 'resident.py', 'resident_rpc.py')
 PREVIOUS_FILES = (*LEGACY_FILES, 'async_jobs.py', 'ctx.py')
 HOOK_FILES = (*PREVIOUS_FILES, 'hooks.py')
-FILES = (*HOOK_FILES, 'native_hooks.py')
+NATIVE_FILES = (*HOOK_FILES, 'native_hooks.py')
+FILES = (*NATIVE_FILES, 'outcomes.py', 'input_tracking.py')
 RECEIPT = '.pow-cxd-install.json'
 OWNER = 'pow-cxd-standalone-v1'
 
@@ -53,11 +54,12 @@ def inspect(package, shim):
     expected = {str(package / name) for name in FILES} | {str(shim), str(ctx_shim)}
     previous = {str(package / name) for name in PREVIOUS_FILES} | {str(shim), str(ctx_shim)}
     hook_previous = {str(package / name) for name in HOOK_FILES} | {str(shim), str(ctx_shim)}
+    native_previous = {str(package / name) for name in NATIVE_FILES} | {str(shim), str(ctx_shim)}
     legacy = {str(package / name) for name in LEGACY_FILES} | {str(shim)}
     if (not isinstance(data, dict) or data.get('owner') != OWNER or data.get('package_dir') != str(package)
             or data.get('bin_dir') != str(shim.parent)
             or not isinstance(data.get('files'), dict)
-            or set(data['files']) not in (expected, hook_previous, previous, legacy)):
+            or set(data['files']) not in (expected, native_previous, hook_previous, previous, legacy)):
         raise ValueError(f'Invalid ownership receipt: {receipt}')
     # Never follow paths from the receipt: enumerate only our configured targets.
     for path in [*(package / name for name in FILES), shim, ctx_shim]:
