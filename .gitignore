@@ -5,6 +5,7 @@ coverage/
 __pycache__/
 *.py[cod]
 .cxd/
+.pow/
 
 /work/scheduler-measurements/
 /work/test-tmp/

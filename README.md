@@ -48,10 +48,13 @@ POW installs commands into `${CODEX_HOME:-~/.codex}/skills` and records SHA-256 
 | [`add-repo-rules`](commands/add-repo-rules/SKILL.md) | Add a durable instruction to the current repository. |
 | [`asap`](commands/asap/SKILL.md) | Execute a clear request without a separate plan-approval checkpoint. |
 | [`coop`](commands/coop/SKILL.md) | Keep ideation with the human while Codex asks focused questions. |
+| [`compressor`](commands/compressor/SKILL.md) | Audit repository bloat, quarantine reviewed files, and restore without overwriting new work. |
+| [`design-reasoning`](commands/design-reasoning/SKILL.md) | Capture real desktop/mobile interactions and bind visual review to actual screenshots. |
 | [`dopagaki`](commands/dopagaki/SKILL.md) | Deliver answers first; accelerate substantial work with parallel Codex CLI implementation, integration, and verification. |
 | [`env`](commands/env/SKILL.md) | Configure or diagnose environment secrets without exposing their values. |
 | [`ethics-dead`](commands/ethics-dead/SKILL.md) | Deliver an unexpected black joke about the current topic. |
 | [`fuck-off`](commands/fuck-off/SKILL.md) | Turn rejected behavior into a concrete repository rule. |
+| [`hatarake`](commands/hatarake/SKILL.md) | Bound implementation attempts and require artifact evidence and independent review before completion. |
 | [`js-do-it`](commands/js-do-it/SKILL.md) | Execute authorized or isolated security work without redundant hesitation. |
 | [`multi-codex`](commands/multi-codex/SKILL.md) | Fork independent work into context-preserving Codex Main tasks. |
 | [`optimize-latency`](commands/optimize-latency/SKILL.md) | Diagnose slow tasks and reduce repeated code generation, model round trips, and orchestration costs using measured evidence. |
@@ -60,6 +63,20 @@ POW installs commands into `${CODEX_HOME:-~/.codex}/skills` and records SHA-256 
 | [`pow-reference`](commands/pow-reference/SKILL.md) | Learn a mechanism from pinned primary code, pass compact evidence, and retain facts with clear invalidation conditions. |
 | [`prove`](commands/prove/SKILL.md) | Run an explicitly requested bounded execution comparison, preserving real outcomes and failure evidence. |
 | [`soso`](commands/soso/SKILL.md) | Preserve an approved working pattern as a repository rule. |
+| [`update`](commands/update/SKILL.md) | Discover evolving workflows and ordered CI declarations; run explicitly approved local Node steps. |
+
+## Executable engineering commands
+
+Invoke `$update`, `$compressor`, `$hatarake`, or `$design-reasoning` in Codex after installation. Each Skill bundles its own standalone Node runtime and works without the other three. The clone also provides literal slash dispatch:
+
+```sh
+node scripts/pow.mjs /update scan --root .
+node scripts/pow.mjs /compressor help
+node scripts/pow.mjs /hatarake --help
+node scripts/pow.mjs /design-reasoning help
+```
+
+The installer action `update` updates Skills; `/update` inspects a target repository. Runtime state lives under that target's `.pow/`, which should remain private and ignored. No model API, automatic hooks, publishing, or dependency installation is enabled. Browser capture requires Node 22+ and an existing Chrome/Edge executable. Read the [architecture, scenarios and limits](docs/engineering-commands.md) and each Skill's runtime reference before applying changes.
 
 ## Evaluation and parallel work
 

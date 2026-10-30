@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
+import { spawn } from "node:child_process";
 import {
   chmod,
   copyFile,
@@ -407,6 +408,8 @@ function usage() {
     "  validate    Validate repository commands",
     "",
     "--name NAME limits install or update to one repository command.",
+    "Runtime: /update, /compressor, /hatarake, /design-reasoning <arguments>",
+    "Example: node scripts/pow.mjs /update scan --root .",
   ].join("\n");
 }
 
@@ -428,6 +431,19 @@ export async function run(args, options = {}) {
     manifestPath: path.join(codexHome, ".pow", "manifest.json"),
   };
   try {
+    const runtime = new Map([
+      ["/update", "update"], ["/compressor", "compressor"],
+      ["/hatarake", "hatarake"], ["/design-reasoning", "design-reasoning"],
+    ]).get(args[0]);
+    if (runtime) {
+      return await new Promise((resolve, reject) => {
+        const child = spawn(process.execPath,
+          [path.join(repoRoot, "commands", runtime, "scripts", `${runtime}.mjs`), ...args.slice(1)],
+          { stdio: "inherit", shell: false });
+        child.once("error", reject);
+        child.once("exit", (code) => resolve(code ?? 1));
+      });
+    }
     let force = false;
     let name;
     const positional = [];
