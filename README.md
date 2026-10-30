@@ -62,6 +62,7 @@ POW installs commands into `${CODEX_HOME:-~/.codex}/skills` and records SHA-256 
 | [`pow-first-loop`](commands/pow-first-loop/SKILL.md) | Define an ideal outcome, consult a history-free AI, and build a real executable loop toward completion. |
 | [`pow-reference`](commands/pow-reference/SKILL.md) | Learn a mechanism from pinned primary code, pass compact evidence, and retain facts with clear invalidation conditions. |
 | [`prove`](commands/prove/SKILL.md) | Run an explicitly requested bounded execution comparison, preserving real outcomes and failure evidence. |
+| [`repo-refactor`](commands/repo-refactor/SKILL.md) | Continuously improve repository structure, responsibility boundaries, and debugging through compatible refactoring and evidence-based cleanup. |
 | [`soso`](commands/soso/SKILL.md) | Preserve an approved working pattern as a repository rule. |
 | [`update`](commands/update/SKILL.md) | Discover evolving workflows and ordered CI declarations; run explicitly approved local Node steps. |
 
