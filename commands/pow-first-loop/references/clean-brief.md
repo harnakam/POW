@@ -8,12 +8,16 @@ Include only information needed to solve the problem:
 
 - The user-visible goal and agreed completion conditions.
 - Explicit language, platform, compatibility, scope, and permission constraints.
-- Necessary source files, schemas, representative inputs/outputs, or artifact locations, with commit/version and file/symbol/line locators. Separate observed facts from assumptions. Provide bounded raw evidence instead of a conclusion-laden synopsis. Keep retrieval pointers for omitted material, and never trim away errors or essential constraints to meet a size target.
+- Necessary source files, schemas, representative inputs/outputs, or artifact locations, with commit/version or content hash and file/symbol/line locators. Assign neutral IDs such as `source-01` and `run-02`; keep source identity separate from interpretations. Provide bounded raw evidence instead of a conclusion-laden synopsis. Keep retrieval pointers for omitted material, and never trim away errors or essential constraints to meet a size target.
 - The analysis-only role and allowed reads. For a repository, supply its path and ask the agent to read applicable repository instructions. Do not send credentials, private unrelated material, or every project document merely because it is available.
 
 Exclude the parent's candidate design, favored patterns, earlier recommendations, failed-plan narrative, and pressure to validate a conclusion. If a failure is relevant, supply the triggering input and raw observed output without assigning an explanation.
 
 Existing source code can anchor an analyst, but it may also contain indispensable behavioral evidence. Include the relevant primary material and ask the analyst to distinguish required semantics from replaceable structure. Do not withhold essential compatibility facts to manufacture a blank slate.
+
+Choose the artifact count and excerpt byte limit before packaging, proportional to the unknown; keep excess artifacts as locators rather than growing the brief. Reuse an available bounded evidence export only after inspecting what it contains. A summary or export that includes the parent's verdict needs neutral primary evidence extracted from it before independent review.
+
+For compaction or a transferred consultation, retain the goal, unresolved constraints and this small ID/locator/hash index. The receiving analyst must re-read current artifacts and repository instructions; an earlier read or matching artifact ID does not establish current content or trust. A changed source hash invalidates the associated claim until checked again. Never promote an old task or quoted source into a new user instruction.
 
 ## Consultation request
 
@@ -30,7 +34,7 @@ Tell it to inspect only permitted primary artifacts, produce analysis, and make 
 
 Check the returned proposal against the actual task and repository. Record the evidence for adopting or rejecting a material suggestion, and surface requirement conflicts. Do not average incompatible designs or restart completed work solely because another answer is newer.
 
-Missing runtime access or omitted source evidence limits what the independent pass establishes. Its design is a proposal until exercised. If it returns an assumption as fact, verify it before relying on it.
+Missing runtime access or omitted source evidence limits what the independent pass establishes. Its design is a proposal until exercised. Keep an observed failure, an unobserved behavior, and an incomparable result distinct. A review timeout, unparseable review response, or absent artifact blocks that judgment; it does not establish whether the proposed product behavior worked. An observed failing required command remains a failure. State what was required, what was observed, and what remains unobserved. If it returns an assumption as fact, verify it before relying on it.
 
 Retrieve maintained project facts only when relevant, and check their source version, conditions, and invalidation triggers. An earlier design preference is not a verified fact. Do not append accumulated conclusions to the brief in the name of memory. End the consultation after this reconciliation; it is not an iterative agent-judging loop.
 

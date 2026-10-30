@@ -4,8 +4,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { lstat, readdir, readFile, realpath, mkdir, open, rename, unlink } from 'node:fs/promises';
 import path from 'node:path';
+import { ExperienceError, validateExperiences, reconcileExperiences, observeExperience, changeExperience, experienceView } from './experience.mjs';
 
-const VERSION = 1;
+const VERSION = 2;
 const LIMIT = { files: 2000, fileBytes: 1048576, totalBytes: 33554432, output: 1048576, workflows: 50, sequences: 20, steps: 20, outcomes: 50, history: 50 };
 const TTL = 7 * 86400000;
 const EXCLUDE = new Set(['.git', '.pow', '.cxd', 'node_modules', 'dist', 'build', 'coverage', '.next', '.venv', '__pycache__']);
@@ -67,7 +68,7 @@ async function execute(executable, args, root, timeout = 10000, capture = true) 
   });
 }
 
-async function discover(root) {
+async function discover(root, { historyEnabled = true } = {}) {
   const sources = [], bodies = new Map(), limitations = [];
   let bytes = 0, visited = 0, incomplete = false;
   async function walk(relative = '', depth = 0) {
@@ -93,11 +94,11 @@ async function discover(root) {
   sources.sort((a, b) => a[0].localeCompare(b[0]));
   const gitBase = ['--no-pager', '-c', 'core.fsmonitor=false'];
   // Fixed read-only argv; never inspect commit messages, patches, remotes, or shell history.
-  const history = await execute('git', [...gitBase, 'log', `-${LIMIT.history}`, '--format=', '--name-only', '--no-renames', '--no-ext-diff', '--', '.'], root);
-  const head = await execute('git', [...gitBase, 'rev-parse', '--verify', 'HEAD'], root);
+  const history = historyEnabled ? await execute('git', [...gitBase, 'log', `-${LIMIT.history}`, '--format=', '--name-only', '--no-renames', '--no-ext-diff', '--', '.'], root) : { code: null, text: '', error: null };
+  const head = historyEnabled ? await execute('git', [...gitBase, 'rev-parse', '--verify', 'HEAD'], root) : { code: null, text: '' };
   const counts = new Map();
   if (history.code === 0 && !history.error) for (const name of history.text.split(/\r?\n/).filter(Boolean)) counts.set(name, (counts.get(name) || 0) + 1);
-  else limitations.push('Git history unavailable; repetition evidence is incomplete.');
+  else if (historyEnabled) limitations.push('Git history unavailable; repetition evidence is incomplete.');
   const ci = [...bodies].filter(([name]) => name.startsWith('.github/'));
   let scripts = {};
   if (bodies.has('package.json')) {
@@ -158,8 +159,9 @@ async function discover(root) {
     }
   }
   const headId = head.code === 0 && /^[0-9a-f]{40,64}\s*$/.test(head.text) ? head.text.trim() : null;
-  const fingerprint = digest({ sources, head: headId, runtime: process.version, platform: process.platform });
-  return { fingerprint, complete: !incomplete, sources, head: headId, workflows, sequences: sequences.filter(item => item.steps.length > 0), limitations, history: { commitsLimit: LIMIT.history, available: history.code === 0 && !history.error } };
+  const fingerprint = digest({ sources, head: headId, runtime: process.version, platform: process.platform, executable: process.execPath });
+  const sourceFingerprint = digest({ sources, runtime: process.version, platform: process.platform, executable: process.execPath });
+  return { fingerprint, sourceFingerprint, complete: !incomplete, sources, head: headId, workflows, sequences: sequences.filter(item => item.steps.length > 0), limitations, history: { commitsLimit: LIMIT.history, available: history.code === 0 && !history.error } };
 }
 
 async function readState(root) {
@@ -167,7 +169,9 @@ async function readState(root) {
   try {
     if ((await lstat(file)).size > LIMIT.fileBytes) fail('State exceeds size limit.');
     const state = JSON.parse(await readFile(file, 'utf8'));
-    if (state.schemaVersion !== VERSION || state.rootHash !== digest(root) || !Number.isSafeInteger(state.revision) || !Array.isArray(state.workflows) || !Array.isArray(state.outcomes) || state.workflows.length > LIMIT.workflows || state.outcomes.length > LIMIT.outcomes || !Number.isFinite(Date.parse(state.scannedAt))) fail('Unsupported or invalid state; preserve it and review before resetting.');
+    if (![1, VERSION].includes(state.schemaVersion) || state.rootHash !== digest(root) || !Number.isSafeInteger(state.revision) || !Array.isArray(state.workflows) || !Array.isArray(state.outcomes) || state.workflows.length > LIMIT.workflows || state.outcomes.length > LIMIT.outcomes || !Number.isFinite(Date.parse(state.scannedAt))) fail('Unsupported or invalid state; preserve it and review before resetting.');
+    validateExperiences(state.experiences);
+    state.schemaVersion = VERSION;
     return state;
   } catch (error) { if (error.code === 'ENOENT') return null; throw error; }
 }
@@ -184,10 +188,12 @@ async function locked(root, callback) {
 }
 
 async function save(root, state) {
+  const raw = `${JSON.stringify(state, null, 2)}\n`;
+  if (Buffer.byteLength(raw) > LIMIT.fileBytes) fail('State exceeds size limit; existing state was preserved.');
   const file = await safeFile(root, '.pow/update/state.json');
   const temporary = await safeFile(root, `.pow/update/state-${randomUUID()}.tmp`);
   const handle = await open(temporary, 'wx', 0o600);
-  try { await handle.writeFile(`${JSON.stringify(state, null, 2)}\n`); await handle.sync(); }
+  try { await handle.writeFile(raw); await handle.sync(); }
   finally { await handle.close(); }
   try { await rename(temporary, file); }
   catch (error) { await unlink(temporary); throw error; }
@@ -198,15 +204,16 @@ function snapshot(root, scan, previous) {
     complete: scan.complete, sources: scan.sources, head: scan.head, history: scan.history, limitations: scan.limitations,
     workflows: scan.workflows.map(({ step, judgment, ...workflow }) => ({ ...workflow, runnable: Boolean(step) })),
     sequences: scan.sequences,
+    experiences: reconcileExperiences(scan, previous?.experiences || []),
     outcomes: (previous?.outcomes || []).filter(item => Date.now() - Date.parse(item.at) < 90 * 86400000).slice(-LIMIT.outcomes) };
 }
 
 function plan(root, scan, state, timeout) {
   const fresh = Boolean(state && state.fingerprint === scan.fingerprint && Date.now() - Date.parse(state.scannedAt) < TTL);
   const workflows = scan.workflows.map(workflow => {
-    const last = state?.outcomes.filter(item => item.workflow === workflow.id).at(-1);
+    const last = state?.outcomes.filter(item => item.workflow === workflow.id && item.fingerprint === scan.fingerprint).at(-1);
     const observations = state?.outcomes.filter(item => item.workflow === workflow.id && item.fingerprint === scan.fingerprint) || [];
-    const status = !fresh ? 'stale' : !workflow.step || !scan.complete ? 'manual' : last && last.status !== 'success' ? 'review-failure' : observations.some(item => item.status === 'success') ? 'observed-success' : 'untried';
+    const status = !fresh ? 'stale' : !workflow.step || !scan.complete ? 'manual' : last && last.status !== 'success' ? 'review-failure' : observations.some(item => item.status === 'success' && item.inputsUnchanged) ? 'observed-success' : 'untried';
     const approval = fresh && workflow.step && scan.complete ? digest({ root, fingerprint: scan.fingerprint, workflow: workflow.id, step: workflow.step, revision: state.revision, timeout }) : null;
     return { ...workflow, argv: workflow.step ? [process.execPath, ...workflow.step] : null, status, observations: { successes: observations.filter(item => item.status === 'success').length, failures: observations.filter(item => item.status !== 'success').length, last: last || null }, approval };
   });
@@ -215,31 +222,41 @@ function plan(root, scan, state, timeout) {
       const candidate = workflows.find(item => item.id === step.workflowId);
       return { ...step, argv: step.kind === 'review-local-step' ? candidate?.argv || null : null, localStatus: candidate?.status || null };
     }) }));
-  return { schemaVersion: VERSION, fingerprint: scan.fingerprint, fresh, revision: state?.revision || 0, complete: scan.complete, timeoutMs: timeout, limitations: scan.limitations, workflows, sequences };
+  return { schemaVersion: VERSION, fingerprint: scan.fingerprint, fresh, revision: state?.revision || 0, complete: scan.complete, timeoutMs: timeout, limitations: scan.limitations, workflows, sequences,
+    experiences: experienceView(scan, state) };
 }
 
 async function main() {
   if (Number(process.versions.node.split('.')[0]) < 20) fail('Node 20+ required.');
   const args = process.argv.slice(2), command = args.shift();
   if (!command || command === '--help') {
-    console.log('update scan|plan|run --root PATH [--write] [--workflow package:NAME --approve SHA256] [--timeout-ms 1..60000]\nscan is read-only unless --write; plan is read-only; run requires a fresh persisted scan and explicit approval of its plan.'); return;
+    console.log('update scan|plan|run --root PATH [--write] [--workflow package:NAME --approve SHA256] [--timeout-ms 1..60000]\nupdate experiences --root PATH [--workflow package:NAME] [--limit 1..3]\nupdate revoke|restore --root PATH --workflow package:NAME --reason TEXT\nscan/plan/experiences are read-only unless scan --write. Only run executes a reviewed workflow; experience never grants permission.'); return;
   }
-  if (!['scan', 'plan', 'run'].includes(command)) fail('Unknown command.');
+  if (!['scan', 'plan', 'run', 'experiences', 'revoke', 'restore'].includes(command)) fail('Unknown command.');
   const options = {};
   while (args.length) {
     const flag = args.shift();
-    if (!['--root', '--write', '--workflow', '--approve', '--timeout-ms'].includes(flag) || options[flag] !== undefined) fail('Unknown or duplicate option.');
+    if (!['--root', '--write', '--workflow', '--approve', '--timeout-ms', '--limit', '--reason'].includes(flag) || options[flag] !== undefined) fail('Unknown or duplicate option.');
     if (flag === '--write') options[flag] = true;
     else { const value = args.shift(); if (!value || value.startsWith('--')) fail('Option requires a value.'); options[flag] = value; }
   }
   if (options['--write'] && command !== 'scan') fail('--write is only valid for scan.');
-  if ((options['--workflow'] || options['--approve']) && command !== 'run') fail('Execution options are only valid for run.');
+  if (options['--approve'] && command !== 'run' || options['--timeout-ms'] && !['scan', 'plan', 'run'].includes(command)) fail('Execution options are only valid for scan/plan/run.');
+  if (options['--workflow'] && !['run', 'experiences', 'revoke', 'restore'].includes(command)) fail('--workflow is unsupported for this action.');
+  if (options['--limit'] && command !== 'experiences' || options['--reason'] && !['revoke', 'restore'].includes(command)) fail('Experience option does not apply to this action.');
   const root = await realpath(path.resolve(options['--root'] || process.cwd()));
   const timeout = Number(options['--timeout-ms'] || 30000);
   if (!Number.isInteger(timeout) || timeout < 1 || timeout > 60000) fail('Timeout must be an integer from 1 to 60000 ms.');
   const action = async () => {
     const state = await readState(root);
     const scan = await discover(root);
+    if (command === 'experiences') return experienceView(scan, state, { workflow: options['--workflow'], limit: Number(options['--limit'] || 3) });
+    if (['revoke', 'restore'].includes(command)) {
+      const learned = snapshot(root, scan, state);
+      learned.experiences = changeExperience(learned.experiences, options['--workflow'], command, options['--reason']);
+      await save(root, learned);
+      return { action: command, experience: learned.experiences.find(entry => entry.workflow === options['--workflow']) };
+    }
     if (command === 'scan') {
       const learned = snapshot(root, scan, state);
       if (options['--write']) await save(root, learned);
@@ -250,23 +267,31 @@ async function main() {
     const workflow = reviewed.workflows.find(item => item.id === options['--workflow']);
     if (!workflow || !workflow.approval || workflow.approval !== options['--approve']) fail('Execution refused: select a runnable workflow and explicitly approve its current fresh plan token.');
     // Consume authorization before launching. A crash leaves an inspectable interrupted outcome.
-    const outcome = { id: randomUUID(), at: now(), workflow: workflow.id, fingerprint: scan.fingerprint, status: 'interrupted', timeoutMs: timeout };
+    const outcome = { id: randomUUID(), at: now(), workflow: workflow.id, fingerprint: scan.fingerprint, sourceFingerprint: scan.sourceFingerprint, status: 'interrupted', timeoutMs: timeout };
     state.revision++;
     state.outcomes = [...state.outcomes, outcome].slice(-LIMIT.outcomes);
+    state.experiences = observeExperience(reconcileExperiences(scan, state.experiences || []), workflow, outcome, scan, null);
     await save(root, state);
     const started = Date.now();
     const result = await execute(process.execPath, workflow.step, root, timeout, false);
     Object.assign(outcome, { status: result.error || (result.code === 0 ? 'success' : 'exit-failure'), exitCode: result.code, durationMs: Date.now() - started, outputBytes: result.bytes, outputHash: result.outputHash || null });
+    let after = null;
+    try { after = await discover(root, { historyEnabled: false }); }
+    catch { outcome.inputObservation = 'unavailable'; }
+    outcome.afterSourceFingerprint = after?.complete ? after.sourceFingerprint : null;
+    outcome.inputsUnchanged = Boolean(after?.complete && scan.sourceFingerprint === after.sourceFingerprint);
+    state.experiences = observeExperience(state.experiences, workflow, outcome, scan, after);
     state.revision++;
     await save(root, state);
     if (outcome.status !== 'success') process.exitCode = 1;
-    return { outcome, next: 'Review failures or changed inputs, then request a new plan. Output content is deliberately not retained.' };
+    return { outcome, experience: state.experiences.find(entry => entry.workflow === workflow.id),
+      next: 'Review failures or changed inputs, then request a new plan. Historical experience is not current verification or permission. Output content is deliberately not retained.' };
   };
-  console.log(JSON.stringify(command === 'run' || options['--write'] ? await locked(root, action) : await action(), null, 2));
+  console.log(JSON.stringify(['run', 'revoke', 'restore'].includes(command) || options['--write'] ? await locked(root, action) : await action(), null, 2));
 }
 
 main().catch(error => {
   // Filesystem/process exceptions can contain paths or command contents; do not echo them.
-  console.error(JSON.stringify({ error: error instanceof UpdateError ? error.message : 'Update failed reading files, state, or processes. Inspect the root and state without exposing secrets; no automatic retry.' }));
+  console.error(JSON.stringify({ error: error instanceof UpdateError || error instanceof ExperienceError ? error.message : 'Update failed reading files, state, or processes. Inspect the root and state without exposing secrets; no automatic retry.' }));
   process.exitCode = 1;
 });

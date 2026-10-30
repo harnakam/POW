@@ -35,7 +35,7 @@ Use [the evidence protocol](references/evidence.md) to prepare a small brief or 
 
 When an independent AI is requested, give it the neutral goal, constraints, and primary passages without the parent's favored design or failure narrative. A brief assembled from sources is still context; describe the isolation honestly as no inherited conversation. A standalone research request does not by itself launch another agent or authorize project edits.
 
-Keep verified facts separate from interpretations and preferences. Save a reusable fact only when it will prevent repeated investigation, in the project's existing notes convention or, if none exists, `docs/engineering-notes.md`. Update an existing entry rather than accumulating per-run reports. Do not collect conversation archives or credentials as memory, auto-promote guesses into rules, or inject all stored notes into every task.
+Keep verified facts separate from interpretations and preferences. Save a useful experience as a `candidate`; make it `active` only with evidence for its current source and applicability, and retain `stale` or `revoked` records when it stops applying. Follow [the lifecycle and retrieval rules](references/evidence.md) in the project's maintained notes, falling back to `docs/engineering-notes.md`. If the workspace provides `/update experiences`, use its bounded current entries as retrieval leads; this Skill also works without that command. Update existing entries rather than accumulating reports, and retrieve only relevant facts rather than conversation archives.
 
 ## Apply and verify through execution
 
